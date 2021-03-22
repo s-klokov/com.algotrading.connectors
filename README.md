@@ -1,2 +1,2 @@
 # com.algotrading.connectors
-Module com.algotrading.connectors.
+Прототипирование модуля коннекторов.
