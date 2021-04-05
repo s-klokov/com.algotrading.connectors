@@ -59,7 +59,7 @@ class QuikAgentTest2 extends QuikAgent {
             }
         }
         quikCandlesStorage.init();
-        stopTrigger = TimeConditionTrigger.getDelayTrigger(10, ChronoUnit.MINUTES);
+        stopTrigger = TimeConditionTrigger.newDelayTrigger(10, ChronoUnit.MINUTES);
         getCandlesTrigger = new TimeConditionTrigger(now -> now.getSecond() % 5 == 0);
         updateQuikCandlesStorageTrigger = new TimeConditionTrigger(now -> now.getSecond() % 20 == 3);
         isRunning = true;
@@ -178,7 +178,7 @@ class QuikAgentTest2 extends QuikAgent {
         quikReconnectProtection.step(isInterrupted, hasErrorMN, hasErrorCB);
         quikCandlesStorage.step(isInterrupted, hasErrorMN, hasErrorCB);
 
-        if (isInterrupted || stopTrigger.isTriggered()) {
+        if (isInterrupted || stopTrigger.triggered()) {
             this.isInterrupted = true;
         }
         if (!isRunning) {
@@ -243,7 +243,7 @@ class QuikAgentTest2 extends QuikAgent {
                 dataSourceSizesComplete = true;
             }
         }
-        if (getCandlesTrigger.isTriggered()) {
+        if (getCandlesTrigger.triggered()) {
             try {
                 sendMN("getCandles", List.of("TQBR", "AFLT", 1, 5));
             } catch (final IOException e) {
@@ -254,7 +254,7 @@ class QuikAgentTest2 extends QuikAgent {
                 quikCandlesStorage.getDataSourceSizes(1, TimeUnit.SECONDS);
             }
         }
-        if (updateQuikCandlesStorageTrigger.isTriggered()) {
+        if (updateQuikCandlesStorageTrigger.triggered()) {
             updateCandlesResults.clear();
             quikCandlesStorage.dataSourcesMap.forEach(
                     (key, value) -> {

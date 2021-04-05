@@ -144,7 +144,7 @@ public class QuikPositionsManager implements QuikInterface {
             transId = transIdMin;
             throw new IllegalArgumentException("Reading config error");
         }
-        transIdTrigger = TimeConditionTrigger.getPeriodicTrigger(transIdTimeout, ChronoUnit.MILLIS);
+        transIdTrigger = TimeConditionTrigger.newPeriodicTrigger(transIdTimeout, ChronoUnit.MILLIS);
 
         brokerRefSet.clear();
         for (final Object o : (JSONArray) json.get("brokerRefs")) {
@@ -157,7 +157,7 @@ public class QuikPositionsManager implements QuikInterface {
         if (transId < transIdMin || transId >= transIdMax) {
             transId = transIdMin;
         }
-        if (transIdTrigger.isTriggered()) {
+        if (transIdTrigger.triggered()) {
             try (final PrintStream ps = IOHelper.getPrintStream(transIdFileName)) {
                 ps.println(transId);
             } catch (final IOException e) {
@@ -251,8 +251,8 @@ public class QuikPositionsManager implements QuikInterface {
         if (isSubscribed.isDone()
                 && (isSubscribed.isCompletedExceptionally() || !isSubscribed.getNow(false))) {
             if (retrySubscriptionTrigger == null) {
-                retrySubscriptionTrigger = TimeConditionTrigger.getDelayTrigger(retryTimeout, ChronoUnit.MILLIS);
-            } else if (retrySubscriptionTrigger.isTriggered()) {
+                retrySubscriptionTrigger = TimeConditionTrigger.newDelayTrigger(retryTimeout, ChronoUnit.MILLIS);
+            } else if (retrySubscriptionTrigger.triggered()) {
                 retrySubscriptionTrigger = null;
                 isSubscribed = null;
             }

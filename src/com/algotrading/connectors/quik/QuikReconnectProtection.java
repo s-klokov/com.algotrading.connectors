@@ -179,7 +179,7 @@ public class QuikReconnectProtection implements QuikInterface {
             });
         }
 
-        if (checkTrigger != null && checkTrigger.isTriggered()) {
+        if (checkTrigger != null && checkTrigger.triggered()) {
             wasConnected = (isConnected == null) ? null : isConnected.getNow(false);
             isConnected = getResponseMN(
                     "isConnected", null,
@@ -189,11 +189,11 @@ public class QuikReconnectProtection implements QuikInterface {
                 logger.info(prefix + "connected: " + b);
                 if (wasConnected == null) {
                     if (b) {
-                        reconnectTrigger = TimeConditionTrigger.getDelayTrigger(openConnectedTimeout, ChronoUnit.MILLIS);
+                        reconnectTrigger = TimeConditionTrigger.newDelayTrigger(openConnectedTimeout, ChronoUnit.MILLIS);
                     }
                 } else if (!wasConnected) {
                     if (b) {
-                        reconnectTrigger = TimeConditionTrigger.getDelayTrigger(reconnectedTimeout, ChronoUnit.MILLIS);
+                        reconnectTrigger = TimeConditionTrigger.newDelayTrigger(reconnectedTimeout, ChronoUnit.MILLIS);
                     }
                 }
                 if (!b) {
@@ -209,7 +209,7 @@ public class QuikReconnectProtection implements QuikInterface {
             });
         }
 
-        if (reconnectTrigger != null && reconnectTrigger.isTriggered()) {
+        if (reconnectTrigger != null && reconnectTrigger.triggered()) {
             reconnectTrigger = null;
             logger.info(prefix + "ready");
             isReady = true;
@@ -221,7 +221,7 @@ public class QuikReconnectProtection implements QuikInterface {
         isReady = false;
         wasConnected = null;
         isConnected = null;
-        checkTrigger = TimeConditionTrigger.getPeriodicTrigger(checkConnectedTimeout, ChronoUnit.MILLIS);
+        checkTrigger = TimeConditionTrigger.newPeriodicTrigger(checkConnectedTimeout, ChronoUnit.MILLIS);
         reconnectTrigger = null;
         isSubscribed = null;
         logger.info(prefix + "onOpen");
