@@ -117,7 +117,24 @@ public interface QuikInterface {
     void sendMN(String fname, List<?> args) throws IOException;
 
     /**
-     * Отправить запрос CB-серверу.
+     * Отправить chunk-запрос CB-серверу.
+     *
+     * @param chunk код запроса на языке QLua
+     * @throws IOException если произошла ошибка ввода-вывода
+     */
+    void sendCB(String chunk) throws IOException;
+
+    /**
+     * Отправить function-запрос CB-серверу.
+     *
+     * @param fname имя QLua-функции
+     * @param args  список аргументов функции
+     * @throws IOException если произошла ошибка ввода-вывода
+     */
+    void sendCB(String fname, List<?> args) throws IOException;
+
+    /**
+     * Отправить callback-запрос CB-серверу.
      *
      * @param callback имя коллбэка
      * @param filter   код функции фильтрации на языке QLua
@@ -146,6 +163,29 @@ public interface QuikInterface {
      * @return будущий ответ MN-сервера
      */
     CompletableFuture<JSONObject> getResponseMN(String fname, List<?> args,
+                                                long timeout, TimeUnit unit);
+
+    /**
+     * Отправить chunk-запрос CB-серверу и получить будущий ответ.
+     *
+     * @param chunk   код запроса на языке QLua
+     * @param timeout таймаут ожидания
+     * @param unit    единица измерения времени
+     * @return будущий ответ MN-сервера
+     */
+    CompletableFuture<JSONObject> getResponseCB(String chunk,
+                                                long timeout, TimeUnit unit);
+
+    /**
+     * Отправить function-запрос CB-серверу и получить будущий ответ.
+     *
+     * @param fname   имя QLua-функции
+     * @param args    список аргументов функции
+     * @param timeout таймаут ожидания
+     * @param unit    единица измерения времени
+     * @return будущий ответ MN-сервера
+     */
+    CompletableFuture<JSONObject> getResponseCB(String fname, List<?> args,
                                                 long timeout, TimeUnit unit);
 
     /**

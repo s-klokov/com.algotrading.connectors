@@ -330,6 +330,23 @@ public class QuikAgent implements QuikInterface {
     }
 
     @Override
+    public void sendCB(final String chunk) throws IOException {
+        scCB.send("{\"id\":" + (++id)
+                + ",\"clientId\":\"" + clientId
+                + "\",\"chunk\":\"" + escape(chunk) + "\"}");
+        count++;
+    }
+
+    @Override
+    public void sendCB(final String fname, final List<?> args) throws IOException {
+        scCB.send("{\"id\":" + (++id)
+                + ",\"clientId\":\"" + clientId
+                + "\",\"fname\":\"" + fname
+                + "\",\"args\":" + toJSONString(args) + "}");
+        count++;
+    }
+
+    @Override
     public void sendCB(final String callback, final String filter) throws IOException {
         scCB.send("{\"id\":" + (++id)
                   + ",\"clientId\":\"" + clientId
@@ -419,6 +436,44 @@ public class QuikAgent implements QuikInterface {
             responseMap.put(id, response);
         } catch (final IOException e) {
             onIOExceptionMN(e);
+            response.completeExceptionally(e);
+        }
+        return response;
+    }
+
+    @Override
+    public CompletableFuture<JSONObject> getResponseCB(final String chunk,
+                                                       final long timeout, final TimeUnit unit) {
+        if (hasErrorCB()) {
+            return CompletableFuture.failedFuture(new IllegalStateException(
+                    "ErrorCB has happened before the call", lastIOException));
+        }
+        CompletableFuture<JSONObject> response = new CompletableFuture<>();
+        try {
+            sendCB(chunk);
+            response = response.orTimeout(timeout, unit);
+            responseMap.put(id, response);
+        } catch (final IOException e) {
+            onIOExceptionCB(e);
+            response.completeExceptionally(e);
+        }
+        return response;
+    }
+
+    @Override
+    public CompletableFuture<JSONObject> getResponseCB(final String fname, final List<?> args,
+                                                       final long timeout, final TimeUnit unit) {
+        if (hasErrorCB()) {
+            return CompletableFuture.failedFuture(new IllegalStateException(
+                    "ErrorCB has happened before the call", lastIOException));
+        }
+        CompletableFuture<JSONObject> response = new CompletableFuture<>();
+        try {
+            sendCB(fname, args);
+            response = response.orTimeout(timeout, unit);
+            responseMap.put(id, response);
+        } catch (final IOException e) {
+            onIOExceptionCB(e);
             response.completeExceptionally(e);
         }
         return response;

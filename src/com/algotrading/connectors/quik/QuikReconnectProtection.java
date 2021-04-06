@@ -277,6 +277,16 @@ public class QuikReconnectProtection implements QuikInterface {
     }
 
     @Override
+    public void sendCB(final String chunk) throws IOException {
+        quikInterface.sendCB(chunk);
+    }
+
+    @Override
+    public void sendCB(final String fname, final List<?> args) throws IOException {
+        quikInterface.sendCB(fname, args);
+    }
+
+    @Override
     public void sendCB(final String callback, final String filter) throws IOException {
         quikInterface.sendCB(callback, filter);
     }
@@ -289,6 +299,16 @@ public class QuikReconnectProtection implements QuikInterface {
     @Override
     public CompletableFuture<JSONObject> getResponseMN(final String fname, final List<?> args, final long timeout, final TimeUnit unit) {
         return quikInterface.getResponseMN(fname, args, timeout, unit);
+    }
+
+    @Override
+    public CompletableFuture<JSONObject> getResponseCB(final String chunk, final long timeout, final TimeUnit unit) {
+        return quikInterface.getResponseCB(chunk, timeout, unit);
+    }
+
+    @Override
+    public CompletableFuture<JSONObject> getResponseCB(final String fname, final List<?> args, final long timeout, final TimeUnit unit) {
+        return quikInterface.getResponseCB(fname, args, timeout, unit);
     }
 
     @Override
