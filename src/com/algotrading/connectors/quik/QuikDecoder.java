@@ -3,12 +3,12 @@ package com.algotrading.connectors.quik;
 import com.algotrading.base.core.columns.DoubleColumn;
 import com.algotrading.base.core.columns.LongColumn;
 import com.algotrading.base.core.series.FinSeries;
-import com.algotrading.base.core.series.LongToLongFunction;
 import com.algotrading.base.helpers.ParseHelper;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
 import java.util.function.LongPredicate;
+import java.util.function.LongUnaryOperator;
 
 /**
  * Преобразование JSON-объектов, полученных из QUIK, в более удобный формат.
@@ -60,7 +60,7 @@ public class QuikDecoder {
      * @return преобразованный временной ряд
      */
     public static FinSeries getCandles(final JSONObject jsonCandles,
-                                       final LongToLongFunction timeShift,
+                                       final LongUnaryOperator timeShift,
                                        final LongPredicate timeFilter) {
         try {
             final int size = (int) ParseHelper.asLong(jsonCandles.get("size"));
