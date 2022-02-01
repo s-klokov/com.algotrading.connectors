@@ -1,5 +1,6 @@
 package com.algotrading.connectors.quik;
 
+import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
 import org.json.simple.JSONObject;
 
@@ -9,7 +10,7 @@ import java.util.List;
 
 class QuikAgentTest extends QuikAgent {
 
-    private static final SimpleLogger LOGGER = new SimpleLogger();
+    private static final AbstractLogger LOGGER = new SimpleLogger();
     private boolean isRunning = false;
     private long stopTime = 0L;
     private ZonedDateTime dateTime = ZonedDateTime.now().withNano(0);

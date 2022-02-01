@@ -1,5 +1,6 @@
 package com.algotrading.connectors.quik;
 
+import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import org.json.simple.JSONObject;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
 
 class QuikAgentTest2 extends QuikAgent {
 
-    private static final SimpleLogger LOGGER = new SimpleLogger();
+    private static final AbstractLogger LOGGER = new SimpleLogger();
     private boolean isRunning = false;
 
     private QuikReconnectProtection quikReconnectProtection = null;

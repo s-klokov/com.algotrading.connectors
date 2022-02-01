@@ -1,7 +1,7 @@
 package com.algotrading.connectors.quik.execution;
 
 import com.algotrading.base.helpers.IOHelper;
-import com.algotrading.base.util.SimpleLogger;
+import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikDecoder;
 import com.algotrading.connectors.quik.QuikInterface;
@@ -37,7 +37,7 @@ public class QuikPositionsManager implements QuikInterface {
     /**
      * Логгер.
      */
-    private final SimpleLogger logger;
+    private final AbstractLogger logger;
     /**
      * Префикс для лога.
      */
@@ -108,7 +108,7 @@ public class QuikPositionsManager implements QuikInterface {
 
     public QuikPositionsManager(final QuikInterface quikInterface,
                                 final QuikReconnectProtection quikReconnectProtection,
-                                final SimpleLogger logger,
+                                final AbstractLogger logger,
                                 final String clientId) {
         this.quikInterface = quikInterface;
         this.quikReconnectProtection = quikReconnectProtection;
@@ -140,7 +140,7 @@ public class QuikPositionsManager implements QuikInterface {
                 transId = transIdMin;
             }
         } catch (final IOException e) {
-            logger.log(SimpleLogger.ERROR, prefix + "Cannot read transId from file " + transIdFileName, e);
+            logger.log(AbstractLogger.ERROR, prefix + "Cannot read transId from file " + transIdFileName, e);
             transId = transIdMin;
             throw new IllegalArgumentException("Reading config error");
         }
@@ -161,7 +161,7 @@ public class QuikPositionsManager implements QuikInterface {
             try (final PrintStream ps = IOHelper.getPrintStream(transIdFileName)) {
                 ps.println(transId);
             } catch (final IOException e) {
-                logger.log(SimpleLogger.ERROR, prefix + "Cannot write transId to file " + transIdFileName, e);
+                logger.log(AbstractLogger.ERROR, prefix + "Cannot write transId to file " + transIdFileName, e);
             }
         }
         return transId;
@@ -244,7 +244,7 @@ public class QuikPositionsManager implements QuikInterface {
                 logger.info(prefix + "subscription is done");
                 return true;
             }).exceptionally(t -> {
-                logger.log(SimpleLogger.ERROR, prefix + "Cannot subscribe to callbacks", t);
+                logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to callbacks", t);
                 return false;
             });
         }

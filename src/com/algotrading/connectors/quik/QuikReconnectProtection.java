@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik;
 
-import com.algotrading.base.util.SimpleLogger;
+import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
@@ -44,7 +44,7 @@ public class QuikReconnectProtection implements QuikInterface {
     /**
      * Логгер.
      */
-    private final SimpleLogger logger;
+    private final AbstractLogger logger;
     /**
      * Префикс для лога.
      */
@@ -81,7 +81,7 @@ public class QuikReconnectProtection implements QuikInterface {
 
     public QuikReconnectProtection(final QuikInterface quikInterface,
                                    final QuikCalendar quikCalendar,
-                                   final SimpleLogger logger,
+                                   final AbstractLogger logger,
                                    final String clientId) {
         this.quikInterface = quikInterface;
         this.quikCalendar = quikCalendar;
@@ -174,7 +174,7 @@ public class QuikReconnectProtection implements QuikInterface {
                 logger.info(prefix + "subscribed OnDisconnected: " + status);
                 return status;
             }).exceptionally(t -> {
-                logger.log(SimpleLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", t);
+                logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", t);
                 return false;
             });
         }
@@ -202,7 +202,7 @@ public class QuikReconnectProtection implements QuikInterface {
                 }
                 return b;
             }).exceptionally(t -> {
-                logger.log(SimpleLogger.ERROR, prefix + ": Error", t);
+                logger.log(AbstractLogger.ERROR, prefix + ": Error", t);
                 isReady = false;
                 reconnectTrigger = null;
                 return false;
