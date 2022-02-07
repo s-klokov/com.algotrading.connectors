@@ -121,6 +121,9 @@ public class QuikConnect {
                 while (!interrupted()) {
                     step();
                 }
+                if (hasOpenSocketConnectors) {
+                    closeSocketConnectors();
+                }
             }
 
             private void step() {
@@ -217,7 +220,16 @@ public class QuikConnect {
                     }
                     try {
                         final JSONObject jsonObject = (JSONObject) parser.parse(s);
-                        // TODO: _onReceiveMN();
+                        final Object o = jsonObject.get("id");
+                        if (o instanceof Long) {
+                            final CompletableFuture<JSONObject> response;
+                            synchronized (responseMap) {
+                                response = responseMap.remove(o);
+                            }
+                            if (response != null) {
+                                response.complete(jsonObject);
+                            }
+                        }
                     } catch (final ParseException | ClassCastException e) {
                         try {
                             listener.onExceptionMN(e);
@@ -252,7 +264,20 @@ public class QuikConnect {
                     }
                     try {
                         final JSONObject jsonObject = (JSONObject) parser.parse(s);
-                        // TODO: _onReceiveCB();
+                        if (jsonObject.get("callback") instanceof String) {
+                            listener.onCallback(jsonObject);
+                            continue;
+                        }
+                        final Object o = jsonObject.get("id");
+                        if (o instanceof Long) {
+                            final CompletableFuture<JSONObject> response;
+                            synchronized (responseMap) {
+                                response = responseMap.remove(o);
+                            }
+                            if (response != null) {
+                                response.complete(jsonObject);
+                            }
+                        }
                     } catch (final ParseException | ClassCastException e) {
                         try {
                             listener.onExceptionCB(e);
