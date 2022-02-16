@@ -26,13 +26,28 @@ public interface QuikListener {
 
     /**
      * Вызывается при возникновении ошибки в работе MN-сервера.
+     *
      * @param exception исключение
      */
     void onExceptionMN(Exception exception);
 
     /**
      * Вызывается при возникновении ошибки в работе CB-сервера.
+     *
      * @param exception исключение
      */
     void onExceptionCB(Exception exception);
+
+    /**
+     * @return {@code true}, если бизнес-логика выполняется, иначе {@code false}
+     */
+    boolean isRunning();
+
+    /**
+     * Циклическая реализация бизнес-логики.
+     *
+     * @param quikConnect   объект для связи с терминалом QUIK
+     * @param isInterrupted {@code true}, если стоит флаг прерывания, иначе {@code false}
+     */
+    void step(QuikConnect quikConnect, boolean isInterrupted);
 }

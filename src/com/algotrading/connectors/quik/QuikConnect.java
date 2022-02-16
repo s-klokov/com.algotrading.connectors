@@ -22,26 +22,26 @@ import static org.json.simple.JSONValue.escape;
  */
 public class QuikConnect {
     /**
-     * Кодовая страница для текстовых сообщений.
-     */
-    public Charset charset = Charset.forName("CP1251");
-    /**
      * Таймаут в миллисекундах перед повторной попыткой открыть сокеты в случае возникновения ошибок.
      */
-    public long errorTimeout = 60_000L;
+    public volatile long errorTimeout = 60_000L;
     /**
      * Периодичность отправки ping-сообщений в миллисекундах.
      */
-    public long pingTimeout = 15_000L;
+    public volatile long pingTimeout = 15_000L;
     /**
      * Длительность паузы рабочего цикла в миллисекундах в случае отсутствия сообщений.
      */
-    public long idleSleepTimeout = 10L;
+    public volatile long idleSleepTimeout = 10L;
     /**
      * Длительность паузы рабочего цикла в миллисекундах в случае ошибок.
      */
-    public long errorSleepTimeout = 100L;
+    public volatile long errorSleepTimeout = 100L;
 
+    /**
+     * Кодовая страница для текстовых сообщений.
+     */
+    private final Charset charset = Charset.forName("CP1251");
     /**
      * Счётчик для номеров сообщений.
      */
@@ -62,10 +62,6 @@ public class QuikConnect {
      * Идентификатор клиента.
      */
     public final String clientId;
-    /**
-     * Слушатель событий от терминала QUIK.
-     */
-    public final QuikListener listener;
     /**
      * Поток, который слушает ответы от терминала QUIK.
      */
@@ -114,7 +110,6 @@ public class QuikConnect {
         scMN = new SocketConnector(host, portMN);
         scCB = new SocketConnector(host, portCB);
         this.clientId = clientId;
-        this.listener = listener;
         listeningThread = new Thread() {
             @Override
             public void run() {
