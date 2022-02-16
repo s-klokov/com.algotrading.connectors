@@ -30,6 +30,7 @@ public class QuikConnectTest {
     private void init() {
         testListener = new TestListener();
         quikConnect = new QuikConnect("localhost", 10001, 10002, "test", testListener);
+        testListener.setQuikConnect(quikConnect);
     }
 
     private void run(final long duration, final TemporalUnit unit) {
@@ -46,7 +47,7 @@ public class QuikConnectTest {
     @SuppressWarnings("BusyWait")
     private void runUntil(final ZonedDateTime deadline) {
         while (testListener.isRunning()) {
-            testListener.step(quikConnect, Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
+            testListener.step(Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
             try {
                 Thread.sleep(10);
             } catch (final InterruptedException e) {
@@ -56,27 +57,19 @@ public class QuikConnectTest {
     }
 
     static class TestListener implements QuikListener {
+        private QuikConnect quikConnect = null;
         private boolean isRunning = true;
         private boolean areRequestsDone = false;
         private volatile boolean isOpen = false;
 
         @Override
-        public boolean isRunning() {
-            return isRunning;
+        public void setQuikConnect(final QuikConnect quikConnect) {
+            this.quikConnect = quikConnect;
         }
 
         @Override
-        public void step(final QuikConnect quikConnect, final boolean isInterrupted) {
-            if (!isRunning) {
-                return;
-            }
-            if (isOpen && !areRequestsDone && !quikConnect.hasErrorMN() && !quikConnect.hasErrorCB()) {
-                doRequests(quikConnect);
-                areRequestsDone = true;
-            }
-            if (isInterrupted) {
-                isRunning = false;
-            }
+        public boolean isRunning() {
+            return isRunning;
         }
 
         @Override
@@ -105,6 +98,20 @@ public class QuikConnectTest {
         @Override
         public void onExceptionCB(final Exception exception) {
             LOGGER.log(AbstractLogger.ERROR, "onExceptionCB", exception);
+        }
+
+        @Override
+        public void step(final boolean isInterrupted) {
+            if (!isRunning()) {
+                return;
+            }
+            if (isOpen && !areRequestsDone && !quikConnect.hasErrorMN() && !quikConnect.hasErrorCB()) {
+                doRequests(quikConnect);
+                areRequestsDone = true;
+            }
+            if (isInterrupted) {
+                isRunning = false;
+            }
         }
 
         private void doRequests(final QuikConnect quikConnect) {

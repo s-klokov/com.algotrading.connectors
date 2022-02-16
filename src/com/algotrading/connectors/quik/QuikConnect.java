@@ -350,6 +350,11 @@ public class QuikConnect {
         listeningThread.setName("Listener-" + clientId);
     }
 
+    /**
+     * Запустить подключение к терминалу QUIK.
+     * <p>
+     * Этот метод вызывается после метода {@link QuikListener#setQuikConnect(QuikConnect)}.
+     */
     public void start() {
         listeningThread.start();
     }

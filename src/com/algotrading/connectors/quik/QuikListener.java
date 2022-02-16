@@ -8,6 +8,20 @@ import org.json.simple.JSONObject;
 public interface QuikListener {
 
     /**
+     * Задать используемое подключение к терминалу QUIK.
+     * <p>
+     * Этот метод нужно вызвать перед методом {@link QuikConnect#start()}.
+     *
+     * @param quikConnect подключение к терминалу QUIK
+     */
+    void setQuikConnect(final QuikConnect quikConnect);
+
+    /**
+     * @return {@code true}, если бизнес-логика выполняется, иначе {@code false}
+     */
+    boolean isRunning();
+
+    /**
      * Вызывается после установления соединения с терминалом.
      */
     void onOpen();
@@ -39,15 +53,10 @@ public interface QuikListener {
     void onExceptionCB(Exception exception);
 
     /**
-     * @return {@code true}, если бизнес-логика выполняется, иначе {@code false}
-     */
-    boolean isRunning();
-
-    /**
      * Циклическая реализация бизнес-логики.
      *
      * @param quikConnect   объект для связи с терминалом QUIK
      * @param isInterrupted {@code true}, если стоит флаг прерывания, иначе {@code false}
      */
-    void step(QuikConnect quikConnect, boolean isInterrupted);
+    void step(boolean isInterrupted);
 }
