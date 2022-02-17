@@ -95,6 +95,12 @@ public class QuikServerConnectionStatus implements QuikListener {
         }
     }
 
+    private void on() {
+        final ZonedDateTime now = ZonedDateTime.now();
+        cfIsSubscribed = CompletableFuture.completedFuture(new BooleanRetryTime(false, now));
+        cfIsConnected = CompletableFuture.completedFuture(new BooleanRetryTime(false, now));
+    }
+
     private void off() {
         connectedSince = null;
         cfIsSubscribed = CompletableFuture.completedFuture(FALSE_NO_RETRY);
@@ -109,11 +115,7 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (logger != null) {
             logger.info(prefix + "onOpen");
         }
-        executeAtNextStep(() -> {
-            final ZonedDateTime now = ZonedDateTime.now();
-            cfIsSubscribed = CompletableFuture.completedFuture(new BooleanRetryTime(false, now));
-            cfIsConnected = CompletableFuture.completedFuture(new BooleanRetryTime(false, now));
-        });
+        executeAtNextStep(this::on);
     }
 
     @Override

@@ -12,15 +12,18 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
-public class QuikConnectTest {
+/**
+ * Тестирование подключения к терминалу QUIK.
+ */
+class QuikConnectTest1 {
 
     private static final AbstractLogger LOGGER = new SimpleLogger();
     private QuikConnect quikConnect = null;
-    private TestListener testListener = null;
+    private QuikListener quikListener = null;
 
     public static void main(final String[] args) {
         LOGGER.info("STARTED");
-        final QuikConnectTest test = new QuikConnectTest();
+        final QuikConnectTest1 test = new QuikConnectTest1();
         test.init();
         test.run(120, ChronoUnit.SECONDS);
         test.shutdown();
@@ -28,9 +31,9 @@ public class QuikConnectTest {
     }
 
     private void init() {
-        testListener = new TestListener();
-        quikConnect = new QuikConnect("localhost", 10001, 10002, "test", testListener);
-        testListener.setQuikConnect(quikConnect);
+        quikListener = new TestListener();
+        quikConnect = new QuikConnect("localhost", 10001, 10002, "test", quikListener);
+        quikListener.setQuikConnect(quikConnect);
     }
 
     private void run(final long duration, final TemporalUnit unit) {
@@ -46,8 +49,8 @@ public class QuikConnectTest {
 
     @SuppressWarnings("BusyWait")
     private void runUntil(final ZonedDateTime deadline) {
-        while (testListener.isRunning()) {
-            testListener.step(Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
+        while (quikListener.isRunning()) {
+            quikListener.step(Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
             try {
                 Thread.sleep(10);
             } catch (final InterruptedException e) {
