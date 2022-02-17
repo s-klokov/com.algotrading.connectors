@@ -1,4 +1,4 @@
-package com.algotrading.connectors.quik;
+package com.algotrading.connectors.quik.deprecated;
 
 import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;

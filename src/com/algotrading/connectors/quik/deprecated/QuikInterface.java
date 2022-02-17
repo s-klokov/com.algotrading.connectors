@@ -1,4 +1,4 @@
-package com.algotrading.connectors.quik;
+package com.algotrading.connectors.quik.deprecated;
 
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;

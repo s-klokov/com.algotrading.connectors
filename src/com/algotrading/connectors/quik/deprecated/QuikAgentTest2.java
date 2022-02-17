@@ -1,8 +1,9 @@
-package com.algotrading.connectors.quik;
+package com.algotrading.connectors.quik.deprecated;
 
 import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
+import com.algotrading.connectors.quik.QuikDecoder;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
