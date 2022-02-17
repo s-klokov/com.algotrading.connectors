@@ -1,17 +1,14 @@
-package com.algotrading.connectors.quik;
+package com.algotrading.connectors.quik.test;
 
 import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
-import org.json.simple.JSONObject;
+import com.algotrading.connectors.quik.QuikConnect;
+import com.algotrading.connectors.quik.QuikServerConnectionStatus;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
-import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Тестирование подключения к терминалу QUIK.

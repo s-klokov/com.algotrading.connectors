@@ -2,6 +2,7 @@ package com.algotrading.connectors.quik.deprecated;
 
 import com.algotrading.base.core.candles.UpdatableCandles;
 import com.algotrading.base.core.series.FinSeries;
+import com.algotrading.connectors.quik.QuikDataSourceCandles;
 import com.algotrading.connectors.quik.QuikDecoder;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;

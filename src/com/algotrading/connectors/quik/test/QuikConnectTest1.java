@@ -1,7 +1,9 @@
-package com.algotrading.connectors.quik;
+package com.algotrading.connectors.quik.test;
 
 import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
+import com.algotrading.connectors.quik.QuikConnect;
+import com.algotrading.connectors.quik.QuikListener;
 import org.json.simple.JSONObject;
 
 import java.time.ZonedDateTime;
@@ -120,28 +122,28 @@ class QuikConnectTest1 {
         private void doRequests(final QuikConnect quikConnect) {
             try {
                 LOGGER.info("Correct requests:");
-                waitFor(quikConnect.getResponseMN("message(\"Hello, QLua-world!\", 2)", 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseCB("return os.sysdate()", 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("os.sysdate", null, 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseCB("os.sysdate", List.of(), 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("isConnected", null, 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("math.max", List.of(1, 3, 5, 7), 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("message", List.of("Hi, there!", 1), 1, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("message(\"Hello, QLua-world!\", 2)", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseCB("return os.sysdate()", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("os.sysdate", null, 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseCB("os.sysdate", List.of(), 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("isConnected", null, 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("math.max", List.of(1, 3, 5, 7), 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("message", List.of("Hi, there!", 1), 5, TimeUnit.SECONDS));
 
                 LOGGER.info("Erroneous requests:");
-                waitFor(quikConnect.getResponseMN("return string(((", 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("return math.max(\"ABC\", 15)", 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("mess", null, 1, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("math.max", List.of("ABC", 15), 1, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("return string(((", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("return math.max(\"ABC\", 15)", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("mess", null, 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("math.max", List.of("ABC", 15), 5, TimeUnit.SECONDS));
 
                 LOGGER.info("Correct requests:");
-                waitFor(quikConnect.getResponseMN("return initDataSource(\"TQBR\", \"AFLT\", 1)", 1, TimeUnit.SECONDS));
+                waitFor(quikConnect.getResponseMN("return initDataSource(\"TQBR\", \"AFLT\", 1)", 5, TimeUnit.SECONDS));
                 waitFor(quikConnect.getResponseCB("OnAllTrade",
                         "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
-                        1, TimeUnit.SECONDS));
+                        5, TimeUnit.SECONDS));
                 waitFor(quikConnect.getResponseCB("OnCandle",
                         "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
-                        1, TimeUnit.SECONDS));
+                        5, TimeUnit.SECONDS));
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             } catch (final ExecutionException e) {

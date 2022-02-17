@@ -5,6 +5,7 @@ import org.json.simple.JSONObject;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -134,20 +135,21 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (!isRunning()) {
             return;
         }
-        if ("OnDisconnected".equals(jsonObject.get("callback"))) {
-            if (logger != null) {
-                logger.info(prefix + "OnDisconnected");
-            }
-            executeAtNextStep(() -> {
-                connectedSince = null;
-                cfIsConnected = CompletableFuture.completedFuture(
-                        new BooleanRetryTime(
-                                false,
-                                ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS)
-                        )
-                );
-            });
+        if (!"OnDisconnected".equals(jsonObject.get("callback"))) {
+            return;
         }
+        if (logger != null) {
+            logger.info(prefix + "OnDisconnected");
+        }
+        executeAtNextStep(() -> {
+            connectedSince = null;
+            cfIsConnected = CompletableFuture.completedFuture(
+                    new BooleanRetryTime(
+                            false,
+                            ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS)
+                    )
+            );
+        });
     }
 
     @Override
@@ -237,8 +239,8 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (logger != null) {
             logger.debug(prefix + "Check connected");
         }
-        cfIsConnected = quikConnect.getResponseMN(
-                "isConnected", null,
+        cfIsConnected = quikConnect.getResponseCB(
+                "isConnected", (List<?>) null,
                 responseTimeoutMillis, TimeUnit.MILLISECONDS
         ).thenApply(response -> {
             final boolean b = ((long) result(response) == 1L);
@@ -257,7 +259,7 @@ public class QuikServerConnectionStatus implements QuikListener {
             );
         }).exceptionally(t -> {
             if (logger != null) {
-                logger.log(AbstractLogger.ERROR, prefix + ": Cannot check isConnected() == 1", t);
+                logger.log(AbstractLogger.ERROR, prefix + "Cannot check isConnected() == 1", t);
             }
             connectedSince = null;
             return new BooleanRetryTime(

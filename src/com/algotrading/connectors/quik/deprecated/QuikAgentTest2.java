@@ -3,6 +3,7 @@ package com.algotrading.connectors.quik.deprecated;
 import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
+import com.algotrading.connectors.quik.QuikDataSourceCandles;
 import com.algotrading.connectors.quik.QuikDecoder;
 import org.json.simple.JSONObject;
 

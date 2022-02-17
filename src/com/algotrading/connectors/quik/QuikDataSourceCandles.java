@@ -1,4 +1,4 @@
-package com.algotrading.connectors.quik.deprecated;
+package com.algotrading.connectors.quik;
 
 import com.algotrading.base.core.candles.UpdatableCandles;
 import com.algotrading.base.core.series.FinSeries;
