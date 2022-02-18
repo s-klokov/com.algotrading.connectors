@@ -8,9 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 import java.util.Queue;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.algotrading.connectors.quik.QuikDecoder.result;
 import static com.algotrading.connectors.quik.QuikDecoder.status;
@@ -47,8 +45,13 @@ public class QuikServerConnectionStatus implements QuikListener {
     private volatile boolean isRunning = true;
     private final Queue<Runnable> queue = new LinkedBlockingDeque<>();
     private ZonedDateTime connectedSince = null;
-
+    /**
+     * Объект для реализации подписки на коллбэк OnDisconnected.
+     */
     private CompletableFuture<BooleanRetryTime> cfIsSubscribed = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
+    /**
+     * Объект для реализации периодической проверки isConnected() == 1.
+     */
     private CompletableFuture<BooleanRetryTime> cfIsConnected = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
 
     /**
@@ -208,12 +211,21 @@ public class QuikServerConnectionStatus implements QuikListener {
         }
     }
 
+    private static BooleanRetryTime getBooleanRetryTime(final CompletableFuture<BooleanRetryTime> cf) {
+        try {
+            return cf.getNow(null);
+        } catch (final CancellationException | CompletionException e) {
+            return null;
+        }
+    }
+
     private void ensureSubscription() {
         if (!cfIsSubscribed.isDone()) {
             return;
         }
-        final BooleanRetryTime booleanRetryTime = cfIsSubscribed.getNow(null);
-        if (booleanRetryTime.b()
+        final BooleanRetryTime booleanRetryTime = getBooleanRetryTime(cfIsSubscribed);
+        if (booleanRetryTime == null
+                || booleanRetryTime.b()
                 || booleanRetryTime.retryTime() == null
                 || booleanRetryTime.retryTime().isAfter(ZonedDateTime.now())) {
             return;
@@ -234,6 +246,9 @@ public class QuikServerConnectionStatus implements QuikListener {
                         cfIsConnected = CompletableFuture.completedFuture(new BooleanRetryTime(false, ZonedDateTime.now()));
                         return BooleanRetryTime.TRUE_NO_RETRY;
                     } else {
+                        if (logger != null) {
+                            logger.error(prefix + "Cannot subscribe to OnDisconnected");
+                        }
                         return new BooleanRetryTime(
                                 false,
                                 ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS)
@@ -254,14 +269,16 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (!cfIsSubscribed.isDone()) {
             return;
         }
-        if (!cfIsSubscribed.getNow(null).b()) {
+        BooleanRetryTime booleanRetryTime = getBooleanRetryTime(cfIsSubscribed);
+        if (booleanRetryTime == null || !booleanRetryTime.b()) {
             return;
         }
         if (!cfIsConnected.isDone()) {
             return;
         }
-        final BooleanRetryTime booleanRetryTime = cfIsConnected.getNow(null);
-        if (booleanRetryTime.retryTime() == null
+        booleanRetryTime = getBooleanRetryTime(cfIsConnected);
+        if (booleanRetryTime == null
+                || booleanRetryTime.retryTime() == null
                 || booleanRetryTime.retryTime().isAfter(ZonedDateTime.now())) {
             return;
         }
