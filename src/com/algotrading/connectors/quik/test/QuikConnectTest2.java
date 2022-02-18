@@ -52,7 +52,7 @@ class QuikConnectTest2 {
         while (connectionStatus.isRunning()) {
             connectionStatus.step(Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
             if (trigger.triggered()) {
-                LOGGER.info("Connected since: " + connectionStatus.getConnectedSince());
+                LOGGER.info("Connected since: " + connectionStatus.connectedSince());
             }
             try {
                 Thread.sleep(10);

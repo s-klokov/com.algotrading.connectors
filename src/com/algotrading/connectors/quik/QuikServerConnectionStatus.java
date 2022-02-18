@@ -6,6 +6,7 @@ import org.json.simple.JSONObject;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -33,43 +34,64 @@ public class QuikServerConnectionStatus implements QuikListener {
     /**
      * Таймаут при выполнении запросов и получении ответов от терминала.
      */
-    public long responseTimeoutMillis = 5000L;
+    private long responseTimeoutMillis = 5000L;
     /**
      * Периодичность проверки наличия подключения терминала QUIK к серверу QUIK.
      */
-    public long checkConnectedTimeoutMillis = 5000L;
+    private long checkConnectedTimeoutMillis = 5000L;
     /**
      * Периодичность попыток подписки на коллбэк OnDisconnected.
      */
-    public long failedSubscriptionTimeoutMillis = 5000L;
+    private long failedSubscriptionTimeoutMillis = 5000L;
 
     private volatile boolean isRunning = true;
     private final Queue<Runnable> queue = new LinkedBlockingDeque<>();
     private ZonedDateTime connectedSince = null;
 
+    private CompletableFuture<BooleanRetryTime> cfIsSubscribed = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
+    private CompletableFuture<BooleanRetryTime> cfIsConnected = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
+
     /**
-     * Класс для хранения логического значения и момента времени,
-     * после которого требуется пересчёт логического значения.
-     * Если в качестве момента времени используется {@code null},
-     * пересчёт логического значения не нужен.
+     * Конструктор.
+     *
+     * @param logger   логгер
+     * @param clientId идентификатор клиента
      */
-    private record BooleanRetryTime(boolean b, ZonedDateTime retryTime) {
-    }
-
-    private static final BooleanRetryTime FALSE_NO_RETRY = new BooleanRetryTime(false, null);
-    private static final BooleanRetryTime TRUE_NO_RETRY = new BooleanRetryTime(true, null);
-
-    private CompletableFuture<BooleanRetryTime> cfIsSubscribed = CompletableFuture.completedFuture(FALSE_NO_RETRY);
-    private CompletableFuture<BooleanRetryTime> cfIsConnected = CompletableFuture.completedFuture(FALSE_NO_RETRY);
-
     public QuikServerConnectionStatus(final AbstractLogger logger, final String clientId) {
         this.logger = logger;
         prefix = clientId + ": " + QuikServerConnectionStatus.class.getSimpleName() + ": ";
     }
 
+    public QuikServerConnectionStatus withResponseTimeoutMillis(final long responseTimeoutMillis) {
+        this.responseTimeoutMillis = responseTimeoutMillis;
+        return this;
+    }
+
+    public QuikServerConnectionStatus withCheckConnectedTimeoutMillis(final long checkConnectedTimeoutMillis) {
+        this.checkConnectedTimeoutMillis = checkConnectedTimeoutMillis;
+        return this;
+    }
+
+    public QuikServerConnectionStatus withFailedSubscriptionTimeoutMillis(final long failedSubscriptionTimeoutMillis) {
+        this.failedSubscriptionTimeoutMillis = failedSubscriptionTimeoutMillis;
+        return this;
+    }
+
+    public long responseTimeoutMillis() {
+        return responseTimeoutMillis;
+    }
+
+    public long checkConnectedTimeoutMillis() {
+        return checkConnectedTimeoutMillis;
+    }
+
+    public long failedSubscriptionTimeoutMillis() {
+        return failedSubscriptionTimeoutMillis;
+    }
+
     @Override
     public void setQuikConnect(final QuikConnect quikConnect) {
-        this.quikConnect = quikConnect;
+        this.quikConnect = Objects.requireNonNull(quikConnect);
     }
 
     @Override
@@ -81,7 +103,7 @@ public class QuikServerConnectionStatus implements QuikListener {
      * @return момент времени, начиная с которого имеется подключение терминала QUIK к серверу QUIK;
      * {@code null}, если подключение отсутствует
      */
-    public ZonedDateTime getConnectedSince() {
+    public ZonedDateTime connectedSince() {
         return connectedSince;
     }
 
@@ -97,15 +119,13 @@ public class QuikServerConnectionStatus implements QuikListener {
     }
 
     private void on() {
-        final ZonedDateTime now = ZonedDateTime.now();
-        cfIsSubscribed = CompletableFuture.completedFuture(new BooleanRetryTime(false, now));
-        cfIsConnected = CompletableFuture.completedFuture(new BooleanRetryTime(false, now));
+        cfIsSubscribed = CompletableFuture.completedFuture(new BooleanRetryTime(false, ZonedDateTime.now()));
     }
 
     private void off() {
         connectedSince = null;
-        cfIsSubscribed = CompletableFuture.completedFuture(FALSE_NO_RETRY);
-        cfIsConnected = CompletableFuture.completedFuture(FALSE_NO_RETRY);
+        cfIsSubscribed = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
+        cfIsConnected = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
     }
 
     @Override
@@ -179,14 +199,12 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (!isRunning()) {
             return;
         }
-        if (isInterrupted) {
-            isRunning = false;
-        }
         executeRunnables();
         ensureSubscription();
         checkConnected();
         if (isInterrupted && cfIsSubscribed.isDone() && cfIsConnected.isDone()) {
             isRunning = false;
+            off();
         }
     }
 
@@ -195,8 +213,7 @@ public class QuikServerConnectionStatus implements QuikListener {
             return;
         }
         final BooleanRetryTime booleanRetryTime = cfIsSubscribed.getNow(null);
-        if (booleanRetryTime == null
-                || booleanRetryTime.b()
+        if (booleanRetryTime.b()
                 || booleanRetryTime.retryTime() == null
                 || booleanRetryTime.retryTime().isAfter(ZonedDateTime.now())) {
             return;
@@ -210,15 +227,22 @@ public class QuikServerConnectionStatus implements QuikListener {
                         responseTimeoutMillis, TimeUnit.MILLISECONDS)
                 .thenApply(response -> {
                     final boolean status = status(response);
-                    logger.info(prefix + "subscribed OnDisconnected: " + status);
-                    return status ?
-                            TRUE_NO_RETRY :
-                            new BooleanRetryTime(
-                                    false,
-                                    ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS)
-                            );
+                    if (logger != null) {
+                        logger.info(prefix + "subscribed OnDisconnected: " + status);
+                    }
+                    if (status) {
+                        cfIsConnected = CompletableFuture.completedFuture(new BooleanRetryTime(false, ZonedDateTime.now()));
+                        return BooleanRetryTime.TRUE_NO_RETRY;
+                    } else {
+                        return new BooleanRetryTime(
+                                false,
+                                ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS)
+                        );
+                    }
                 }).exceptionally(t -> {
-                    logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", t);
+                    if (logger != null) {
+                        logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", t);
+                    }
                     return new BooleanRetryTime(
                             false,
                             ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS)
@@ -227,12 +251,17 @@ public class QuikServerConnectionStatus implements QuikListener {
     }
 
     private void checkConnected() {
+        if (!cfIsSubscribed.isDone()) {
+            return;
+        }
+        if (!cfIsSubscribed.getNow(null).b()) {
+            return;
+        }
         if (!cfIsConnected.isDone()) {
             return;
         }
         final BooleanRetryTime booleanRetryTime = cfIsConnected.getNow(null);
-        if (booleanRetryTime == null
-                || booleanRetryTime.retryTime() == null
+        if (booleanRetryTime.retryTime() == null
                 || booleanRetryTime.retryTime().isAfter(ZonedDateTime.now())) {
             return;
         }
