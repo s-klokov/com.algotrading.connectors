@@ -55,7 +55,6 @@ public interface QuikListener {
     /**
      * Циклическая реализация бизнес-логики.
      *
-     * @param quikConnect   объект для связи с терминалом QUIK
      * @param isInterrupted {@code true}, если стоит флаг прерывания, иначе {@code false}
      */
     void step(boolean isInterrupted);

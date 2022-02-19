@@ -10,7 +10,9 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -454,17 +456,17 @@ public class QuikConnect {
      */
     public CompletableFuture<JSONObject> getResponseMN(final String chunk,
                                                        final long timeout, final TimeUnit unit) {
-        CompletableFuture<JSONObject> response = new CompletableFuture<>();
-        try {
-            final long id = sendMN(chunk);
-            response = response.orTimeout(timeout, unit);
-            synchronized (responseMap) {
-                responseMap.put(id, response);
+        synchronized (responseMap) {
+            final long id;
+            try {
+                id = sendMN(chunk);
+            } catch (final IOException e) {
+                return CompletableFuture.failedFuture(e);
             }
-        } catch (final IOException e) {
-            response.completeExceptionally(e);
+            final CompletableFuture<JSONObject> response = new CompletableFuture<JSONObject>().orTimeout(timeout, unit);
+            responseMap.put(id, response);
+            return response;
         }
-        return response;
     }
 
     /**
@@ -478,17 +480,17 @@ public class QuikConnect {
      */
     public CompletableFuture<JSONObject> getResponseMN(final String fname, final List<?> args,
                                                        final long timeout, final TimeUnit unit) {
-        CompletableFuture<JSONObject> response = new CompletableFuture<>();
-        try {
-            final long id = sendMN(fname, args);
-            response = response.orTimeout(timeout, unit);
-            synchronized (responseMap) {
-                responseMap.put(id, response);
+        synchronized (responseMap) {
+            final long id;
+            try {
+                id = sendMN(fname, args);
+            } catch (final IOException e) {
+                return CompletableFuture.failedFuture(e);
             }
-        } catch (final IOException e) {
-            response.completeExceptionally(e);
+            final CompletableFuture<JSONObject> response = new CompletableFuture<JSONObject>().orTimeout(timeout, unit);
+            responseMap.put(id, response);
+            return response;
         }
-        return response;
     }
 
     /**
@@ -501,17 +503,17 @@ public class QuikConnect {
      */
     public CompletableFuture<JSONObject> getResponseCB(final String chunk,
                                                        final long timeout, final TimeUnit unit) {
-        CompletableFuture<JSONObject> response = new CompletableFuture<>();
-        try {
-            final long id = sendCB(chunk);
-            response = response.orTimeout(timeout, unit);
-            synchronized (responseMap) {
-                responseMap.put(id, response);
+        synchronized (responseMap) {
+            final long id;
+            try {
+                id = sendCB(chunk);
+            } catch (final IOException e) {
+                return CompletableFuture.failedFuture(e);
             }
-        } catch (final IOException e) {
-            response.completeExceptionally(e);
+            final CompletableFuture<JSONObject> response = new CompletableFuture<JSONObject>().orTimeout(timeout, unit);
+            responseMap.put(id, response);
+            return response;
         }
-        return response;
     }
 
     /**
@@ -525,17 +527,17 @@ public class QuikConnect {
      */
     public CompletableFuture<JSONObject> getResponseCB(final String fname, final List<?> args,
                                                        final long timeout, final TimeUnit unit) {
-        CompletableFuture<JSONObject> response = new CompletableFuture<>();
-        try {
-            final long id = sendCB(fname, args);
-            response = response.orTimeout(timeout, unit);
-            synchronized (responseMap) {
-                responseMap.put(id, response);
+        synchronized (responseMap) {
+            final long id;
+            try {
+                id = sendCB(fname, args);
+            } catch (final IOException e) {
+                return CompletableFuture.failedFuture(e);
             }
-        } catch (final IOException e) {
-            response.completeExceptionally(e);
+            final CompletableFuture<JSONObject> response = new CompletableFuture<JSONObject>().orTimeout(timeout, unit);
+            responseMap.put(id, response);
+            return response;
         }
-        return response;
     }
 
     /**
@@ -549,16 +551,84 @@ public class QuikConnect {
      */
     public CompletableFuture<JSONObject> getResponseCB(final String callback, final String filter,
                                                        final long timeout, final TimeUnit unit) {
-        CompletableFuture<JSONObject> response = new CompletableFuture<>();
-        try {
-            final long id = sendCB(callback, filter);
-            response = response.orTimeout(timeout, unit);
-            synchronized (responseMap) {
-                responseMap.put(id, response);
+        synchronized (responseMap) {
+            final long id;
+            try {
+                id = sendCB(callback, filter);
+            } catch (final IOException e) {
+                return CompletableFuture.failedFuture(e);
             }
-        } catch (final IOException e) {
-            response.completeExceptionally(e);
+            final CompletableFuture<JSONObject> response = new CompletableFuture<JSONObject>().orTimeout(timeout, unit);
+            responseMap.put(id, response);
+            return response;
         }
-        return response;
+    }
+
+    /**
+     * Отправить chunk-запрос MN-серверу и ждать получения ответа.
+     *
+     * @param chunk   код запроса на языке QLua
+     * @param timeout таймаут ожидания
+     * @param unit    единица измерения времени
+     * @return ответ MN-сервера
+     */
+    public JSONObject responseMN(final String chunk,
+                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return getResponseMN(chunk, timeout, unit).get();
+    }
+
+    /**
+     * Отправить function-запрос MN-серверу и ждать получения ответа.
+     *
+     * @param fname   имя QLua-функции
+     * @param args    список аргументов функции
+     * @param timeout таймаут ожидания
+     * @param unit    единица измерения времени
+     * @return ответ MN-сервера
+     */
+    public JSONObject responseMN(final String fname, final List<?> args,
+                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return getResponseMN(fname, args, timeout, unit).get();
+    }
+
+    /**
+     * Отправить chunk-запрос CB-серверу и ждать получения ответа.
+     *
+     * @param chunk   код запроса на языке QLua
+     * @param timeout таймаут ожидания
+     * @param unit    единица измерения времени
+     * @return ответ CB-сервера
+     */
+    public JSONObject responseCB(final String chunk,
+                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return getResponseCB(chunk, timeout, unit).get();
+    }
+
+    /**
+     * Отправить function-запрос CB-серверу и ждать получения ответа.
+     *
+     * @param fname   имя QLua-функции
+     * @param args    список аргументов функции
+     * @param timeout таймаут ожидания
+     * @param unit    единица измерения времени
+     * @return ответ CB-сервера
+     */
+    public JSONObject responseCB(final String fname, final List<?> args,
+                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return getResponseCB(fname, args, timeout, unit).get();
+    }
+
+    /**
+     * Отправить запрос CB-серверу и ждать получения ответа.
+     *
+     * @param callback имя коллбэка
+     * @param filter   код функции фильтрации на языке QLua
+     * @param timeout  таймаут ожидания
+     * @param unit     единица измерения времени
+     * @return ответ CB-сервера
+     */
+    public JSONObject responseCB(final String callback, final String filter,
+                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return getResponseCB(callback, filter, timeout, unit).get();
     }
 }
