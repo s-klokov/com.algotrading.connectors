@@ -10,9 +10,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
+import java.util.Queue;
+import java.util.concurrent.*;
 
 /**
  * Тестирование подключения к терминалу QUIK.
@@ -27,7 +26,7 @@ class QuikConnectTest1 {
         LOGGER.info("STARTED");
         final QuikConnectTest1 test = new QuikConnectTest1();
         test.init();
-        test.run(120, ChronoUnit.SECONDS);
+        test.run(10, ChronoUnit.SECONDS);
         test.shutdown();
         LOGGER.info("SHUTDOWN");
     }
@@ -41,31 +40,110 @@ class QuikConnectTest1 {
     private void run(final long duration, final TemporalUnit unit) {
         LOGGER.info("Starting QuikConnect");
         quikConnect.start();
+        LOGGER.info("Starting execution thread");
+        quikListener.getExecutionThread().start();
         runUntil(ZonedDateTime.now().plus(duration, unit));
     }
 
     private void shutdown() {
+        LOGGER.info("Shutting down execution thread");
+        quikListener.getExecutionThread().interrupt();
+        try {
+            quikListener.getExecutionThread().join();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
         LOGGER.info("Shutting down QuikConnect");
         quikConnect.shutdown();
     }
 
-    @SuppressWarnings("BusyWait")
     private void runUntil(final ZonedDateTime deadline) {
-        while (quikListener.isRunning()) {
-            quikListener.step(Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
-            try {
-                Thread.sleep(10);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+        while (deadline.isAfter(ZonedDateTime.now())) {
+            pause(10L);
+        }
+    }
+
+    private static void pause(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 
     static class TestListener implements QuikListener {
         private QuikConnect quikConnect = null;
-        private boolean isRunning = true;
+        private final Thread executionThread;
+        private final Queue<Runnable> queue = new LinkedBlockingDeque<>();
         private boolean areRequestsDone = false;
         private volatile boolean isOpen = false;
+
+        TestListener() {
+            executionThread = new Thread() {
+                @Override
+                public void run() {
+                    while (!Thread.currentThread().isInterrupted()) {
+                        executeRunnables();
+                        if (isOpen && !areRequestsDone && !quikConnect.hasErrorMN() && !quikConnect.hasErrorCB()) {
+                            doRequests(quikConnect);
+                            areRequestsDone = true;
+                        }
+                        pause(100L);
+                    }
+                    LOGGER.info("Execution thread is done");
+                }
+
+                private void executeRunnables() {
+                    Runnable runnable;
+                    while ((runnable = queue.poll()) != null) {
+                        try {
+                            runnable.run();
+                        } catch (final Exception e) {
+                            LOGGER.log(AbstractLogger.ERROR, e.getMessage(), e);
+                        }
+                    }
+                }
+
+                private void doRequests(final QuikConnect quikConnect) {
+                    try {
+                        LOGGER.info("Correct requests:");
+                        request(() -> quikConnect.responseMN("message(\"Hello, QLua-world!\", 2)", 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseCB("return os.sysdate()", 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("os.sysdate", null, 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseCB("os.sysdate", List.of(), 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("isConnected", null, 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("math.max", List.of(1, 3, 5, 7), 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("message", List.of("Hi, there!", 1), 5, TimeUnit.SECONDS));
+
+                        LOGGER.info("Erroneous requests:");
+                        request(() -> quikConnect.responseMN("return string(((", 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("return math.max(\"ABC\", 15)", 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("mess", null, 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseMN("math.max", List.of("ABC", 15), 5, TimeUnit.SECONDS));
+
+                        LOGGER.info("Correct requests:");
+                        request(() -> quikConnect.responseMN("return initDataSource(\"TQBR\", \"AFLT\", 1)", 5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseCB("OnAllTrade",
+                                "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
+                                5, TimeUnit.SECONDS));
+                        request(() -> quikConnect.responseCB("OnCandle",
+                                "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
+                                5, TimeUnit.SECONDS));
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                    } catch (final Exception e) {
+                        LOGGER.log(AbstractLogger.ERROR, e.getMessage(), e);
+                    }
+                }
+
+                private static void request(final Callable<JSONObject> callable) throws Exception {
+                    long t = System.nanoTime();
+                    final JSONObject json = callable.call();
+                    t = (System.nanoTime() - t) / 1_000_000L;
+                    LOGGER.info(t + " ms; " + json);
+                }
+            };
+        }
 
         @Override
         public void setQuikConnect(final QuikConnect quikConnect) {
@@ -73,8 +151,13 @@ class QuikConnectTest1 {
         }
 
         @Override
-        public boolean isRunning() {
-            return isRunning;
+        public Thread getExecutionThread() {
+            return executionThread;
+        }
+
+        @Override
+        public void execute(final Runnable runnable) {
+            queue.add(runnable);
         }
 
         @Override
@@ -103,59 +186,6 @@ class QuikConnectTest1 {
         @Override
         public void onExceptionCB(final Exception exception) {
             LOGGER.log(AbstractLogger.ERROR, "onExceptionCB", exception);
-        }
-
-        @Override
-        public void step(final boolean isInterrupted) {
-            if (!isRunning()) {
-                return;
-            }
-            if (isOpen && !areRequestsDone && !quikConnect.hasErrorMN() && !quikConnect.hasErrorCB()) {
-                doRequests(quikConnect);
-                areRequestsDone = true;
-            }
-            if (isInterrupted) {
-                isRunning = false;
-            }
-        }
-
-        private void doRequests(final QuikConnect quikConnect) {
-            try {
-                LOGGER.info("Correct requests:");
-                waitFor(quikConnect.futureResponseMN("message(\"Hello, QLua-world!\", 2)", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseCB("return os.sysdate()", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("os.sysdate", null, 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseCB("os.sysdate", List.of(), 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("isConnected", null, 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("math.max", List.of(1, 3, 5, 7), 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("message", List.of("Hi, there!", 1), 5, TimeUnit.SECONDS));
-
-                LOGGER.info("Erroneous requests:");
-                waitFor(quikConnect.futureResponseMN("return string(((", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("return math.max(\"ABC\", 15)", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("mess", null, 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseMN("math.max", List.of("ABC", 15), 5, TimeUnit.SECONDS));
-
-                LOGGER.info("Correct requests:");
-                waitFor(quikConnect.futureResponseMN("return initDataSource(\"TQBR\", \"AFLT\", 1)", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseCB("OnAllTrade",
-                        "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
-                        5, TimeUnit.SECONDS));
-                waitFor(quikConnect.futureResponseCB("OnCandle",
-                        "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
-                        5, TimeUnit.SECONDS));
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-            } catch (final ExecutionException e) {
-                LOGGER.log(AbstractLogger.ERROR, e.getMessage(), e);
-            }
-        }
-
-        private static void waitFor(final CompletableFuture<JSONObject> cf) throws InterruptedException, ExecutionException {
-            long t = System.nanoTime();
-            final JSONObject json = cf.get();
-            t = (System.nanoTime() - t) / 1_000_000L;
-            LOGGER.info(t + " ms; " + json);
         }
     }
 }

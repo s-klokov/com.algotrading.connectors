@@ -38,6 +38,8 @@ class QuikConnectTest2 {
     private void run(final long duration, final TemporalUnit unit) {
         LOGGER.info("Starting QuikConnect");
         quikConnect.start();
+        LOGGER.info("Starting execution thread");
+        connectionStatus.getExecutionThread().start();
         runUntil(ZonedDateTime.now().plus(duration, unit));
     }
 
@@ -49,8 +51,7 @@ class QuikConnectTest2 {
     @SuppressWarnings("BusyWait")
     private void runUntil(final ZonedDateTime deadline) {
         final TimeConditionTrigger trigger = TimeConditionTrigger.newSecondChangedTrigger();
-        while (connectionStatus.isRunning()) {
-            connectionStatus.step(Thread.currentThread().isInterrupted() || !ZonedDateTime.now().isBefore(deadline));
+        while (deadline.isAfter(ZonedDateTime.now())) {
             if (trigger.triggered()) {
                 LOGGER.info("Connected since: " + connectionStatus.connectedSince());
             }
@@ -59,6 +60,12 @@ class QuikConnectTest2 {
             } catch (final InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
+        }
+        connectionStatus.getExecutionThread().interrupt();
+        try {
+            connectionStatus.getExecutionThread().join();
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
         }
     }
 }

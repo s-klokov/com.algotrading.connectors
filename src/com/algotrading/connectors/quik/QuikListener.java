@@ -10,52 +10,55 @@ public interface QuikListener {
     /**
      * Задать используемое подключение к терминалу QUIK.
      * <p>
-     * Этот метод нужно вызвать перед методом {@link QuikConnect#start()}.
+     * Порядок вызова:<br>
+     * 1) этот метод;<br>
+     * 2) метод {@link QuikConnect#start()};<br>
+     * 3) поток слушателя: {@code listener.getExecutionThread().start()}.
      *
      * @param quikConnect подключение к терминалу QUIK
      */
     void setQuikConnect(final QuikConnect quikConnect);
 
     /**
-     * @return {@code true}, если бизнес-логика выполняется, иначе {@code false}
+     * @return поток, в котором выполняется бизнес-логика слушателя
      */
-    boolean isRunning();
+    Thread getExecutionThread();
 
     /**
-     * Вызывается после установления соединения с терминалом.
+     * Поставить код в очередь на исполнение в потоке бизнес-логики слушателя.
+     *
+     * @param runnable исполняемый код
+     */
+    void execute(Runnable runnable);
+
+    /**
+     * Вызывается после установления соединения с терминалом в потоке, где работает {@link QuikConnect}.
      */
     void onOpen();
 
     /**
-     * Вызывается после закрытия соединения с терминалом.
+     * Вызывается после закрытия соединения с терминалом в потоке, где работает {@link QuikConnect}.
      */
     void onClose();
 
     /**
-     * Вызывается при получении коллбэка от терминала QUIK.
+     * Вызывается при получении коллбэка от терминала QUIK в потоке, где работает {@link QuikConnect}.
      *
      * @param jsonObject объект, описывающий коллбэк
      */
     void onCallback(JSONObject jsonObject);
 
     /**
-     * Вызывается при возникновении ошибки в работе MN-сервера.
+     * Вызывается при возникновении ошибки в работе MN-сервера в потоке, где работает {@link QuikConnect}.
      *
      * @param exception исключение
      */
     void onExceptionMN(Exception exception);
 
     /**
-     * Вызывается при возникновении ошибки в работе CB-сервера.
+     * Вызывается при возникновении ошибки в работе CB-сервера в потоке, где работает {@link QuikConnect}.
      *
      * @param exception исключение
      */
     void onExceptionCB(Exception exception);
-
-    /**
-     * Циклическая реализация бизнес-логики.
-     *
-     * @param isInterrupted {@code true}, если стоит флаг прерывания, иначе {@code false}
-     */
-    void step(boolean isInterrupted);
 }

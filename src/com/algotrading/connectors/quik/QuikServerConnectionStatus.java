@@ -18,6 +18,10 @@ import static com.algotrading.connectors.quik.QuikDecoder.status;
  */
 public class QuikServerConnectionStatus implements QuikListener {
     /**
+     * Объект для синхронизации.
+     */
+    private final Object mutex = new Object();
+    /**
      * Логгер.
      */
     private final AbstractLogger logger;
@@ -28,31 +32,31 @@ public class QuikServerConnectionStatus implements QuikListener {
     /**
      * Подключение к терминалу QUIK.
      */
-    private QuikConnect quikConnect = null;
+    private volatile QuikConnect quikConnect = null;
+    /**
+     * Поток для исполнения бизнес-логики.
+     */
+    private final Thread executionThread;
     /**
      * Таймаут при выполнении запросов и получении ответов от терминала.
      */
-    private long responseTimeoutMillis = 5000L;
+    private volatile long responseTimeoutMillis = 5000L;
     /**
      * Периодичность проверки наличия подключения терминала QUIK к серверу QUIK.
      */
-    private long checkConnectedTimeoutMillis = 5000L;
+    private volatile long checkConnectedTimeoutMillis = 5000L;
     /**
      * Периодичность попыток подписки на коллбэк OnDisconnected.
      */
-    private long failedSubscriptionTimeoutMillis = 5000L;
+    private volatile long failedSubscriptionTimeoutMillis = 5000L;
 
     private volatile boolean isRunning = true;
     private final Queue<Runnable> queue = new LinkedBlockingDeque<>();
-    private ZonedDateTime connectedSince = null;
-    /**
-     * Объект для реализации подписки на коллбэк OnDisconnected.
-     */
-    private CompletableFuture<BooleanRetryTime> cfIsSubscribed = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
-    /**
-     * Объект для реализации периодической проверки isConnected() == 1.
-     */
-    private CompletableFuture<BooleanRetryTime> cfIsConnected = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
+    private ZonedDateTime connectedSince = null; // synchronized(mutex)
+
+    private boolean isSubscribed = false;
+    private ZonedDateTime nextSubscriptionTime = null;
+    private ZonedDateTime nextCheckConnectionTime = null;
 
     /**
      * Конструктор.
@@ -63,6 +67,31 @@ public class QuikServerConnectionStatus implements QuikListener {
     public QuikServerConnectionStatus(final AbstractLogger logger, final String clientId) {
         this.logger = logger;
         prefix = clientId + ": " + QuikServerConnectionStatus.class.getSimpleName() + ": ";
+        executionThread = new Thread(() -> {
+            while (isRunning) {
+                executeRunnables();
+                if (quikConnect.hasErrorMN() || quikConnect.hasErrorCB()) {
+                    pause(quikConnect.errorSleepTimeout);
+                } else {
+                    ensureSubscription();
+                    checkConnected();
+                    pause(quikConnect.idleSleepTimeout);
+                }
+                if (Thread.currentThread().isInterrupted()) {
+                    isRunning = false;
+                    off();
+                }
+            }
+        });
+        executionThread.setName(clientId + "-" + QuikServerConnectionStatus.class.getSimpleName());
+    }
+
+    private static void pause(final long millis) {
+        try {
+            Thread.sleep(millis);
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     public QuikServerConnectionStatus withResponseTimeoutMillis(final long responseTimeoutMillis) {
@@ -98,8 +127,13 @@ public class QuikServerConnectionStatus implements QuikListener {
     }
 
     @Override
-    public boolean isRunning() {
-        return isRunning;
+    public Thread getExecutionThread() {
+        return executionThread;
+    }
+
+    @Override
+    public void execute(final Runnable runnable) {
+        queue.add(runnable);
     }
 
     /**
@@ -107,55 +141,62 @@ public class QuikServerConnectionStatus implements QuikListener {
      * {@code null}, если подключение отсутствует
      */
     public ZonedDateTime connectedSince() {
-        return connectedSince;
-    }
-
-    private void executeAtNextStep(final Runnable runnable) {
-        queue.add(runnable);
+        synchronized (mutex) {
+            return connectedSince;
+        }
     }
 
     private void executeRunnables() {
         Runnable runnable;
         while ((runnable = queue.poll()) != null) {
-            runnable.run();
+            try {
+                runnable.run();
+            } catch (final Exception e) {
+                if (logger != null) {
+                    logger.log(AbstractLogger.ERROR, e.getMessage(), e);
+                }
+            }
         }
     }
 
     private void on() {
-        cfIsSubscribed = CompletableFuture.completedFuture(new BooleanRetryTime(false, ZonedDateTime.now()));
+        nextSubscriptionTime = ZonedDateTime.now();
     }
 
     private void off() {
-        connectedSince = null;
-        cfIsSubscribed = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
-        cfIsConnected = CompletableFuture.completedFuture(BooleanRetryTime.FALSE_NO_RETRY);
+        synchronized (mutex) {
+            connectedSince = null;
+        }
+        isSubscribed = false;
+        nextSubscriptionTime = null;
+        nextCheckConnectionTime = null;
     }
 
     @Override
     public void onOpen() {
-        if (!isRunning()) {
+        if (!isRunning) {
             return;
         }
         if (logger != null) {
             logger.info(prefix + "onOpen");
         }
-        executeAtNextStep(this::on);
+        execute(this::on);
     }
 
     @Override
     public void onClose() {
-        if (!isRunning()) {
+        if (!isRunning) {
             return;
         }
         if (logger != null) {
             logger.info(prefix + "onClose");
         }
-        executeAtNextStep(this::off);
+        execute(this::off);
     }
 
     @Override
     public void onCallback(final JSONObject jsonObject) {
-        if (!isRunning()) {
+        if (!isRunning) {
             return;
         }
         if (!"OnDisconnected".equals(jsonObject.get("callback"))) {
@@ -164,154 +205,126 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (logger != null) {
             logger.info(prefix + "OnDisconnected");
         }
-        executeAtNextStep(() -> {
-            connectedSince = null;
-            cfIsConnected = CompletableFuture.completedFuture(
-                    new BooleanRetryTime(
-                            false,
-                            ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS)
-                    )
-            );
+        execute(() -> {
+            synchronized (mutex) {
+                connectedSince = null;
+            }
+            nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS);
         });
     }
 
     @Override
     public void onExceptionMN(final Exception exception) {
-        if (!isRunning()) {
+        if (!isRunning) {
             return;
         }
         if (logger != null) {
             logger.warn(prefix + "onExceptionMN");
         }
-        executeAtNextStep(this::off);
+        execute(this::off);
     }
 
     @Override
     public void onExceptionCB(final Exception exception) {
-        if (!isRunning()) {
+        if (!isRunning) {
             return;
         }
         if (logger != null) {
             logger.warn(prefix + "onExceptionCB");
         }
-        executeAtNextStep(this::off);
-    }
-
-    @Override
-    public void step(final boolean isInterrupted) {
-        if (!isRunning()) {
-            return;
-        }
-        executeRunnables();
-        ensureSubscription();
-        checkConnected();
-        if (isInterrupted && cfIsSubscribed.isDone() && cfIsConnected.isDone()) {
-            isRunning = false;
-            off();
-        }
-    }
-
-    private static BooleanRetryTime getBooleanRetryTime(final CompletableFuture<BooleanRetryTime> cf) {
-        try {
-            return cf.getNow(null);
-        } catch (final CancellationException | CompletionException e) {
-            return null;
-        }
+        execute(this::off);
     }
 
     private void ensureSubscription() {
-        if (!cfIsSubscribed.isDone()) {
-            return;
-        }
-        final BooleanRetryTime booleanRetryTime = getBooleanRetryTime(cfIsSubscribed);
-        if (booleanRetryTime == null
-                || booleanRetryTime.b()
-                || booleanRetryTime.retryTime() == null
-                || booleanRetryTime.retryTime().isAfter(ZonedDateTime.now())) {
+        if (isSubscribed
+                || nextSubscriptionTime == null
+                || nextSubscriptionTime.isAfter(ZonedDateTime.now())) {
             return;
         }
         if (logger != null) {
             logger.info(prefix + "Subscribe to OnDisconnect");
         }
-        cfIsSubscribed = quikConnect.futureResponseCB(
-                        "OnDisconnected",
-                        "*",
-                        responseTimeoutMillis, TimeUnit.MILLISECONDS)
-                .thenApply(response -> {
-                    final boolean status = status(response);
-                    if (logger != null) {
-                        logger.info(prefix + "subscribed OnDisconnected: " + status);
-                    }
-                    if (status) {
-                        cfIsConnected = CompletableFuture.completedFuture(new BooleanRetryTime(false, ZonedDateTime.now()));
-                        return BooleanRetryTime.TRUE_NO_RETRY;
-                    } else {
-                        if (logger != null) {
-                            logger.error(prefix + "Cannot subscribe to OnDisconnected");
-                        }
-                        return new BooleanRetryTime(
-                                false,
-                                ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS)
-                        );
-                    }
-                }).exceptionally(t -> {
-                    if (logger != null) {
-                        logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", t);
-                    }
-                    return new BooleanRetryTime(
-                            false,
-                            ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS)
-                    );
-                });
+        final JSONObject response;
+        try {
+            response = quikConnect.responseCB(
+                    "OnDisconnected",
+                    "*",
+                    responseTimeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (final Exception e) {
+            if (logger != null) {
+                logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", e);
+            }
+            nextSubscriptionTime = ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            return;
+        }
+        final boolean status = status(response);
+        if (logger != null) {
+            logger.info(prefix + "subscribed to OnDisconnected: " + status);
+        }
+        if (status) {
+            isSubscribed = true;
+            nextSubscriptionTime = null;
+            nextCheckConnectionTime = ZonedDateTime.now();
+        } else {
+            if (logger != null) {
+                logger.error(prefix + "Cannot subscribe to OnDisconnected");
+            }
+            nextSubscriptionTime = ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS);
+        }
     }
 
     private void checkConnected() {
-        if (!cfIsSubscribed.isDone()) {
-            return;
-        }
-        BooleanRetryTime booleanRetryTime = getBooleanRetryTime(cfIsSubscribed);
-        if (booleanRetryTime == null || !booleanRetryTime.b()) {
-            return;
-        }
-        if (!cfIsConnected.isDone()) {
-            return;
-        }
-        booleanRetryTime = getBooleanRetryTime(cfIsConnected);
-        if (booleanRetryTime == null
-                || booleanRetryTime.retryTime() == null
-                || booleanRetryTime.retryTime().isAfter(ZonedDateTime.now())) {
+        if (!isSubscribed
+                || nextCheckConnectionTime == null
+                || nextCheckConnectionTime.isAfter(ZonedDateTime.now())) {
             return;
         }
         if (logger != null) {
             logger.debug(prefix + "Check connected");
         }
-        cfIsConnected = quikConnect.futureResponseCB(
-                "isConnected", (List<?>) null,
-                responseTimeoutMillis, TimeUnit.MILLISECONDS
-        ).thenApply(response -> {
-            final boolean b = ((long) result(response) == 1L);
+        final JSONObject response;
+        try {
+            response = quikConnect.responseCB(
+                    "isConnected", (List<?>) null,
+                    responseTimeoutMillis, TimeUnit.MILLISECONDS);
+        } catch (final Exception e) {
             if (logger != null) {
-                logger.debug(prefix + "connected: " + b);
+                logger.log(AbstractLogger.ERROR, "Cannot check isConnected() == 1", e);
             }
-            if (b && connectedSince == null) {
-                connectedSince = ZonedDateTime.now();
+            nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS);
+            if (e instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
             }
-            if (!b) {
+            return;
+        }
+        if ((long) result(response) == 1L) {
+            final ZonedDateTime previous;
+            synchronized (mutex) {
+                previous = connectedSince;
+                if (previous == null) {
+                    connectedSince = ZonedDateTime.now();
+                }
+            }
+            if (previous == null) {
+                if (logger != null) {
+                    logger.debug(prefix + "connected");
+                }
+            }
+        } else {
+            final ZonedDateTime prevConnectedSince;
+            synchronized (mutex) {
+                prevConnectedSince = connectedSince;
                 connectedSince = null;
             }
-            return new BooleanRetryTime(
-                    b,
-                    ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS)
-            );
-        }).exceptionally(t -> {
-            if (logger != null) {
-                logger.log(AbstractLogger.ERROR, prefix + "Cannot check isConnected() == 1", t);
+            if (prevConnectedSince != null) {
+                if (logger != null) {
+                    logger.debug(prefix + "disconnected");
+                }
             }
-            connectedSince = null;
-            return new BooleanRetryTime(
-                    false,
-                    ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS)
-            );
-        });
+        }
+        nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS);
     }
 }

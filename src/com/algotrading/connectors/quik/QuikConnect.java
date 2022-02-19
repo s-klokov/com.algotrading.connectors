@@ -349,13 +349,16 @@ public class QuikConnect {
                 }
             }
         };
-        listeningThread.setName("Listener-" + clientId);
+        listeningThread.setName(clientId + "-" + QuikConnect.class.getSimpleName());
     }
 
     /**
      * Запустить подключение к терминалу QUIK.
      * <p>
-     * Этот метод вызывается после метода {@link QuikListener#setQuikConnect(QuikConnect)}.
+     * Порядок вызова:<br>
+     * 1) {@link QuikListener#setQuikConnect(QuikConnect)};<br>
+     * 2) этот метод;<br>
+     * 3) поток слушателя: {@code listener.getExecutionThread().start()}.
      */
     public void start() {
         listeningThread.start();
@@ -369,6 +372,15 @@ public class QuikConnect {
         return hasErrorCB;
     }
 
+    /**
+     * Остановить подключение к терминалу QUIK.
+     *
+     * Порядок остановки:<br>
+     * 1) поток, реализующий бизнес-логику слушателя:<br>
+     * {@code listener.getExecutionThread().interrupt();}<br>
+     * {@code listener.getExecutionThread().join();}<br>
+     * 2) этот метод.
+     */
     public void shutdown() {
         listeningThread.interrupt();
         try {
