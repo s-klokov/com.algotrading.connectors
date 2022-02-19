@@ -2,6 +2,7 @@ package com.algotrading.connectors.quik.test;
 
 import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.SimpleLogger;
+import com.algotrading.connectors.quik.AbstractQuikListener;
 import com.algotrading.connectors.quik.QuikConnect;
 import com.algotrading.connectors.quik.QuikListener;
 import org.json.simple.JSONObject;
@@ -10,8 +11,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Тестирование подключения к терминалу QUIK.
@@ -26,7 +27,7 @@ class QuikConnectTest1 {
         LOGGER.info("STARTED");
         final QuikConnectTest1 test = new QuikConnectTest1();
         test.init();
-        test.run(10, ChronoUnit.SECONDS);
+        test.run(120, ChronoUnit.SECONDS);
         test.shutdown();
         LOGGER.info("SHUTDOWN");
     }
@@ -71,10 +72,7 @@ class QuikConnectTest1 {
         }
     }
 
-    static class TestListener implements QuikListener {
-        private QuikConnect quikConnect = null;
-        private final Thread executionThread;
-        private final Queue<Runnable> queue = new LinkedBlockingDeque<>();
+    static class TestListener extends AbstractQuikListener {
         private boolean areRequestsDone = false;
         private volatile boolean isOpen = false;
 
@@ -143,38 +141,26 @@ class QuikConnectTest1 {
                     LOGGER.info(t + " ms; " + json);
                 }
             };
-        }
-
-        @Override
-        public void setQuikConnect(final QuikConnect quikConnect) {
-            this.quikConnect = quikConnect;
-        }
-
-        @Override
-        public Thread getExecutionThread() {
-            return executionThread;
-        }
-
-        @Override
-        public void execute(final Runnable runnable) {
-            queue.add(runnable);
+            executionThread.setName("ExecutionThread");
         }
 
         @Override
         public void onOpen() {
-            LOGGER.info("OnOpen");
+            LOGGER.info("onOpen");
             isOpen = true;
+            execute(() -> LOGGER.info("onOpen"));
         }
 
         @Override
         public void onClose() {
-            LOGGER.info("OnClose");
+            LOGGER.info("onClose");
             isOpen = false;
+            execute(() -> LOGGER.info("onClose"));
         }
 
         @Override
         public void onCallback(final JSONObject jsonObject) {
-            LOGGER.info("OnCallBack " + jsonObject.get("callback"));
+            LOGGER.info("onCallBack " + jsonObject.get("callback"));
             LOGGER.info(jsonObject.toString());
         }
 

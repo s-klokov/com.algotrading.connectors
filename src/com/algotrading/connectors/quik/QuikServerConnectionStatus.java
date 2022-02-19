@@ -6,9 +6,7 @@ import org.json.simple.JSONObject;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 
 import static com.algotrading.connectors.quik.QuikDecoder.result;
 import static com.algotrading.connectors.quik.QuikDecoder.status;
@@ -16,7 +14,7 @@ import static com.algotrading.connectors.quik.QuikDecoder.status;
 /**
  * Отслеживание наличия подключения терминала QUIK к серверу QUIK.
  */
-public class QuikServerConnectionStatus implements QuikListener {
+public class QuikServerConnectionStatus extends AbstractQuikListener {
     /**
      * Объект для синхронизации.
      */
@@ -29,14 +27,6 @@ public class QuikServerConnectionStatus implements QuikListener {
      * Префикс для лога.
      */
     private final String prefix;
-    /**
-     * Подключение к терминалу QUIK.
-     */
-    private volatile QuikConnect quikConnect = null;
-    /**
-     * Поток для исполнения бизнес-логики.
-     */
-    private final Thread executionThread;
     /**
      * Таймаут при выполнении запросов и получении ответов от терминала.
      */
@@ -51,7 +41,6 @@ public class QuikServerConnectionStatus implements QuikListener {
     private volatile long failedSubscriptionTimeoutMillis = 5000L;
 
     private volatile boolean isRunning = true;
-    private final Queue<Runnable> queue = new LinkedBlockingDeque<>();
     private ZonedDateTime connectedSince = null; // synchronized(mutex)
 
     private boolean isSubscribed = false;
@@ -86,14 +75,6 @@ public class QuikServerConnectionStatus implements QuikListener {
         executionThread.setName(clientId + "-" + QuikServerConnectionStatus.class.getSimpleName());
     }
 
-    private static void pause(final long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-    }
-
     public QuikServerConnectionStatus withResponseTimeoutMillis(final long responseTimeoutMillis) {
         this.responseTimeoutMillis = responseTimeoutMillis;
         return this;
@@ -119,21 +100,6 @@ public class QuikServerConnectionStatus implements QuikListener {
 
     public long failedSubscriptionTimeoutMillis() {
         return failedSubscriptionTimeoutMillis;
-    }
-
-    @Override
-    public void setQuikConnect(final QuikConnect quikConnect) {
-        this.quikConnect = Objects.requireNonNull(quikConnect);
-    }
-
-    @Override
-    public Thread getExecutionThread() {
-        return executionThread;
-    }
-
-    @Override
-    public void execute(final Runnable runnable) {
-        queue.add(runnable);
     }
 
     /**
