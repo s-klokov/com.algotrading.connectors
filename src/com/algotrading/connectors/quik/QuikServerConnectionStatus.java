@@ -233,7 +233,7 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (logger != null) {
             logger.info(prefix + "Subscribe to OnDisconnect");
         }
-        cfIsSubscribed = quikConnect.getResponseCB(
+        cfIsSubscribed = quikConnect.futureResponseCB(
                         "OnDisconnected",
                         "*",
                         responseTimeoutMillis, TimeUnit.MILLISECONDS)
@@ -285,7 +285,7 @@ public class QuikServerConnectionStatus implements QuikListener {
         if (logger != null) {
             logger.debug(prefix + "Check connected");
         }
-        cfIsConnected = quikConnect.getResponseCB(
+        cfIsConnected = quikConnect.futureResponseCB(
                 "isConnected", (List<?>) null,
                 responseTimeoutMillis, TimeUnit.MILLISECONDS
         ).thenApply(response -> {

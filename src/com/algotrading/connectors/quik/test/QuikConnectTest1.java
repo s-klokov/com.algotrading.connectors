@@ -122,26 +122,26 @@ class QuikConnectTest1 {
         private void doRequests(final QuikConnect quikConnect) {
             try {
                 LOGGER.info("Correct requests:");
-                waitFor(quikConnect.getResponseMN("message(\"Hello, QLua-world!\", 2)", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseCB("return os.sysdate()", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("os.sysdate", null, 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseCB("os.sysdate", List.of(), 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("isConnected", null, 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("math.max", List.of(1, 3, 5, 7), 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("message", List.of("Hi, there!", 1), 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("message(\"Hello, QLua-world!\", 2)", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseCB("return os.sysdate()", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("os.sysdate", null, 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseCB("os.sysdate", List.of(), 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("isConnected", null, 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("math.max", List.of(1, 3, 5, 7), 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("message", List.of("Hi, there!", 1), 5, TimeUnit.SECONDS));
 
                 LOGGER.info("Erroneous requests:");
-                waitFor(quikConnect.getResponseMN("return string(((", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("return math.max(\"ABC\", 15)", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("mess", null, 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseMN("math.max", List.of("ABC", 15), 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("return string(((", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("return math.max(\"ABC\", 15)", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("mess", null, 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseMN("math.max", List.of("ABC", 15), 5, TimeUnit.SECONDS));
 
                 LOGGER.info("Correct requests:");
-                waitFor(quikConnect.getResponseMN("return initDataSource(\"TQBR\", \"AFLT\", 1)", 5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseCB("OnAllTrade",
+                waitFor(quikConnect.futureResponseMN("return initDataSource(\"TQBR\", \"AFLT\", 1)", 5, TimeUnit.SECONDS));
+                waitFor(quikConnect.futureResponseCB("OnAllTrade",
                         "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
                         5, TimeUnit.SECONDS));
-                waitFor(quikConnect.getResponseCB("OnCandle",
+                waitFor(quikConnect.futureResponseCB("OnCandle",
                         "function(t) return t.class_code == \"TQBR\" and t.sec_code == \"AFLT\" end",
                         5, TimeUnit.SECONDS));
             } catch (final InterruptedException e) {
