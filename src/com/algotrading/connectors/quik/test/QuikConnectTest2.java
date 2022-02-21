@@ -10,6 +10,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 
+import static com.algotrading.connectors.quik.AbstractQuikListener.pause;
+
 /**
  * Тестирование подключения к терминалу QUIK.
  */
@@ -48,18 +50,13 @@ class QuikConnectTest2 {
         quikConnect.shutdown();
     }
 
-    @SuppressWarnings("BusyWait")
     private void runUntil(final ZonedDateTime deadline) {
         final TimeConditionTrigger trigger = TimeConditionTrigger.newSecondChangedTrigger();
         while (deadline.isAfter(ZonedDateTime.now())) {
             if (trigger.triggered()) {
                 LOGGER.info("Connected since: " + connectionStatus.connectedSince());
             }
-            try {
-                Thread.sleep(10);
-            } catch (final InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            pause(10);
         }
         connectionStatus.getExecutionThread().interrupt();
         try {

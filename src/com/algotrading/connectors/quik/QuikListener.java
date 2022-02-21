@@ -29,7 +29,7 @@ public interface QuikListener {
      *
      * @param runnable исполняемый код
      */
-    void execute(Runnable runnable);
+    void submit(Runnable runnable);
 
     /**
      * Вызывается после установления соединения с терминалом в потоке, где работает {@link QuikConnect}.

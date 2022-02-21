@@ -8,11 +8,11 @@ import com.algotrading.connectors.quik.QuikListener;
 import org.json.simple.JSONObject;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
+
+import static com.algotrading.connectors.quik.AbstractQuikListener.pause;
 
 /**
  * Тестирование подключения к терминалу QUIK.
@@ -27,7 +27,7 @@ class QuikConnectTest1 {
         LOGGER.info("STARTED");
         final QuikConnectTest1 test = new QuikConnectTest1();
         test.init();
-        test.run(120, ChronoUnit.SECONDS);
+        test.run();
         test.shutdown();
         LOGGER.info("SHUTDOWN");
     }
@@ -38,12 +38,12 @@ class QuikConnectTest1 {
         quikListener.setQuikConnect(quikConnect);
     }
 
-    private void run(final long duration, final TemporalUnit unit) {
+    private void run() {
         LOGGER.info("Starting QuikConnect");
         quikConnect.start();
         LOGGER.info("Starting execution thread");
         quikListener.getExecutionThread().start();
-        runUntil(ZonedDateTime.now().plus(duration, unit));
+        runUntil(ZonedDateTime.now().plusSeconds(180));
     }
 
     private void shutdown() {
@@ -60,15 +60,7 @@ class QuikConnectTest1 {
 
     private void runUntil(final ZonedDateTime deadline) {
         while (deadline.isAfter(ZonedDateTime.now())) {
-            pause(10L);
-        }
-    }
-
-    private static void pause(final long millis) {
-        try {
-            Thread.sleep(millis);
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
+            pause(100L);
         }
     }
 
@@ -86,7 +78,7 @@ class QuikConnectTest1 {
                             doRequests(quikConnect);
                             areRequestsDone = true;
                         }
-                        pause(100L);
+                        pause(1L);
                     }
                     LOGGER.info("Execution thread is done");
                 }
@@ -148,14 +140,14 @@ class QuikConnectTest1 {
         public void onOpen() {
             LOGGER.info("onOpen");
             isOpen = true;
-            execute(() -> LOGGER.info("onOpen"));
+            submit(() -> LOGGER.info("onOpen"));
         }
 
         @Override
         public void onClose() {
             LOGGER.info("onClose");
             isOpen = false;
-            execute(() -> LOGGER.info("onClose"));
+            submit(() -> LOGGER.info("onClose"));
         }
 
         @Override

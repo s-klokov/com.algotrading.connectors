@@ -28,7 +28,7 @@ public abstract class AbstractQuikListener implements QuikListener {
     }
 
     @Override
-    public void execute(final Runnable runnable) {
+    public void submit(final Runnable runnable) {
         queue.add(runnable);
     }
 
@@ -37,7 +37,7 @@ public abstract class AbstractQuikListener implements QuikListener {
      *
      * @param millis длительность паузы в миллисекундах
      */
-    protected void pause(final long millis) {
+    public static void pause(final long millis) {
         try {
             Thread.sleep(millis);
         } catch (final InterruptedException e) {

@@ -8,6 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.algotrading.base.util.JSONConfig.getLong;
 import static com.algotrading.connectors.quik.QuikDecoder.result;
 import static com.algotrading.connectors.quik.QuikDecoder.status;
 
@@ -15,10 +16,6 @@ import static com.algotrading.connectors.quik.QuikDecoder.status;
  * Отслеживание наличия подключения терминала QUIK к серверу QUIK.
  */
 public class QuikServerConnectionStatus extends AbstractQuikListener {
-    /**
-     * Объект для синхронизации.
-     */
-    private final Object mutex = new Object();
     /**
      * Логгер.
      */
@@ -30,18 +27,26 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
     /**
      * Таймаут при выполнении запросов и получении ответов от терминала.
      */
-    private volatile long responseTimeoutMillis = 5000L;
+    private volatile long responseTimeout = 5000L;
     /**
      * Периодичность проверки наличия подключения терминала QUIK к серверу QUIK.
      */
-    private volatile long checkConnectedTimeoutMillis = 5000L;
+    private volatile long checkConnectedTimeout = 5000L;
     /**
      * Периодичность попыток подписки на коллбэк OnDisconnected.
      */
-    private volatile long failedSubscriptionTimeoutMillis = 5000L;
+    private volatile long failedSubscriptionTimeout = 5000L;
+    /**
+     * Длительность паузы рабочего цикла в миллисекундах в случае отсутствия сообщений.
+     */
+    private volatile long idleSleepTimeout = 100L;
+    /**
+     * Длительность паузы рабочего цикла в миллисекундах в случае ошибок.
+     */
+    private volatile long errorSleepTimeout = 500L;
 
     private volatile boolean isRunning = true;
-    private ZonedDateTime connectedSince = null; // synchronized(mutex)
+    private volatile ZonedDateTime connectedSince = null;
 
     private boolean isSubscribed = false;
     private ZonedDateTime nextSubscriptionTime = null;
@@ -58,13 +63,15 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         prefix = clientId + ": " + QuikServerConnectionStatus.class.getSimpleName() + ": ";
         executionThread = new Thread(() -> {
             while (isRunning) {
-                executeRunnables();
+                final int count = executeRunnables();
                 if (quikConnect.hasErrorMN() || quikConnect.hasErrorCB()) {
-                    pause(quikConnect.errorSleepTimeout);
+                    pause(errorSleepTimeout);
                 } else {
                     ensureSubscription();
                     checkConnected();
-                    pause(quikConnect.idleSleepTimeout);
+                    if (count == 0) {
+                        pause(idleSleepTimeout);
+                    }
                 }
                 if (Thread.currentThread().isInterrupted()) {
                     isRunning = false;
@@ -75,31 +82,57 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         executionThread.setName(clientId + "-" + QuikServerConnectionStatus.class.getSimpleName());
     }
 
-    public QuikServerConnectionStatus withResponseTimeoutMillis(final long responseTimeoutMillis) {
-        this.responseTimeoutMillis = responseTimeoutMillis;
+    public QuikServerConnectionStatus withResponseTimeout(final long responseTimeout) {
+        this.responseTimeout = responseTimeout;
         return this;
     }
 
-    public QuikServerConnectionStatus withCheckConnectedTimeoutMillis(final long checkConnectedTimeoutMillis) {
-        this.checkConnectedTimeoutMillis = checkConnectedTimeoutMillis;
+    public QuikServerConnectionStatus withCheckConnectedTimeout(final long checkConnectedTimeout) {
+        this.checkConnectedTimeout = checkConnectedTimeout;
         return this;
     }
 
-    public QuikServerConnectionStatus withFailedSubscriptionTimeoutMillis(final long failedSubscriptionTimeoutMillis) {
-        this.failedSubscriptionTimeoutMillis = failedSubscriptionTimeoutMillis;
+    public QuikServerConnectionStatus withFailedSubscriptionTimeout(final long failedSubscriptionTimeout) {
+        this.failedSubscriptionTimeout = failedSubscriptionTimeout;
         return this;
     }
 
-    public long responseTimeoutMillis() {
-        return responseTimeoutMillis;
+    public QuikServerConnectionStatus withIdleSleepTimeout(final long idleSleepTimeout) {
+        this.idleSleepTimeout = idleSleepTimeout;
+        return this;
     }
 
-    public long checkConnectedTimeoutMillis() {
-        return checkConnectedTimeoutMillis;
+    public QuikServerConnectionStatus withErrorSleepTimeout(final long errorSleepTimeout) {
+        this.errorSleepTimeout = errorSleepTimeout;
+        return this;
     }
 
-    public long failedSubscriptionTimeoutMillis() {
-        return failedSubscriptionTimeoutMillis;
+    public long responseTimeout() {
+        return responseTimeout;
+    }
+
+    public long checkConnectedTimeout() {
+        return checkConnectedTimeout;
+    }
+
+    public long failedSubscriptionTimeout() {
+        return failedSubscriptionTimeout;
+    }
+
+    public long idleSleepTimeout() {
+        return idleSleepTimeout;
+    }
+
+    public long errorSleepTimeout() {
+        return errorSleepTimeout;
+    }
+
+    public void configurate(final JSONObject json) {
+        responseTimeout = getLong(json, "responseTimeout");
+        checkConnectedTimeout = getLong(json, "checkConnectedTimeout");
+        failedSubscriptionTimeout = getLong(json, "failedSubscriptionTimeout");
+        idleSleepTimeout = getLong(json, "idleSleepTimeout");
+        errorSleepTimeout = getLong(json, "errorSleepTimeout");
     }
 
     /**
@@ -107,12 +140,16 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
      * {@code null}, если подключение отсутствует
      */
     public ZonedDateTime connectedSince() {
-        synchronized (mutex) {
-            return connectedSince;
-        }
+        return connectedSince;
     }
 
-    private void executeRunnables() {
+    /**
+     * Выполнить код из очереди.
+     *
+     * @return количество исполненных блоков кода
+     */
+    private int executeRunnables() {
+        int count = 0;
         Runnable runnable;
         while ((runnable = queue.poll()) != null) {
             try {
@@ -122,7 +159,9 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
                     logger.log(AbstractLogger.ERROR, e.getMessage(), e);
                 }
             }
+            count++;
         }
+        return count;
     }
 
     private void on() {
@@ -130,9 +169,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
     }
 
     private void off() {
-        synchronized (mutex) {
-            connectedSince = null;
-        }
+        connectedSince = null;
         isSubscribed = false;
         nextSubscriptionTime = null;
         nextCheckConnectionTime = null;
@@ -146,7 +183,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         if (logger != null) {
             logger.info(prefix + "onOpen");
         }
-        execute(this::on);
+        submit(this::on);
     }
 
     @Override
@@ -157,7 +194,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         if (logger != null) {
             logger.info(prefix + "onClose");
         }
-        execute(this::off);
+        submit(this::off);
     }
 
     @Override
@@ -171,11 +208,9 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         if (logger != null) {
             logger.info(prefix + "OnDisconnected");
         }
-        execute(() -> {
-            synchronized (mutex) {
-                connectedSince = null;
-            }
-            nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS);
+        submit(() -> {
+            connectedSince = null;
+            nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeout, ChronoUnit.MILLIS);
         });
     }
 
@@ -187,7 +222,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         if (logger != null) {
             logger.warn(prefix + "onExceptionMN");
         }
-        execute(this::off);
+        submit(this::off);
     }
 
     @Override
@@ -198,7 +233,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         if (logger != null) {
             logger.warn(prefix + "onExceptionCB");
         }
-        execute(this::off);
+        submit(this::off);
     }
 
     private void ensureSubscription() {
@@ -215,12 +250,12 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
             response = quikConnect.responseCB(
                     "OnDisconnected",
                     "*",
-                    responseTimeoutMillis, TimeUnit.MILLISECONDS);
+                    responseTimeout, TimeUnit.MILLISECONDS);
         } catch (final Exception e) {
             if (logger != null) {
                 logger.log(AbstractLogger.ERROR, prefix + "Cannot subscribe to OnDisconnected", e);
             }
-            nextSubscriptionTime = ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS);
+            nextSubscriptionTime = ZonedDateTime.now().plus(failedSubscriptionTimeout, ChronoUnit.MILLIS);
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
@@ -238,7 +273,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
             if (logger != null) {
                 logger.error(prefix + "Cannot subscribe to OnDisconnected");
             }
-            nextSubscriptionTime = ZonedDateTime.now().plus(failedSubscriptionTimeoutMillis, ChronoUnit.MILLIS);
+            nextSubscriptionTime = ZonedDateTime.now().plus(failedSubscriptionTimeout, ChronoUnit.MILLIS);
         }
     }
 
@@ -255,42 +290,32 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         try {
             response = quikConnect.responseCB(
                     "isConnected", (List<?>) null,
-                    responseTimeoutMillis, TimeUnit.MILLISECONDS);
+                    responseTimeout, TimeUnit.MILLISECONDS);
         } catch (final Exception e) {
             if (logger != null) {
                 logger.log(AbstractLogger.ERROR, "Cannot check isConnected() == 1", e);
             }
-            nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS);
+            nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeout, ChronoUnit.MILLIS);
             if (e instanceof InterruptedException) {
                 Thread.currentThread().interrupt();
             }
             return;
         }
         if ((long) result(response) == 1L) {
-            final ZonedDateTime previous;
-            synchronized (mutex) {
-                previous = connectedSince;
-                if (previous == null) {
-                    connectedSince = ZonedDateTime.now();
-                }
-            }
-            if (previous == null) {
+            if (connectedSince == null) {
+                connectedSince = ZonedDateTime.now();
                 if (logger != null) {
                     logger.debug(prefix + "connected");
                 }
             }
         } else {
-            final ZonedDateTime prevConnectedSince;
-            synchronized (mutex) {
-                prevConnectedSince = connectedSince;
+            if (connectedSince != null) {
                 connectedSince = null;
-            }
-            if (prevConnectedSince != null) {
                 if (logger != null) {
                     logger.debug(prefix + "disconnected");
                 }
             }
         }
-        nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeoutMillis, ChronoUnit.MILLIS);
+        nextCheckConnectionTime = ZonedDateTime.now().plus(checkConnectedTimeout, ChronoUnit.MILLIS);
     }
 }
