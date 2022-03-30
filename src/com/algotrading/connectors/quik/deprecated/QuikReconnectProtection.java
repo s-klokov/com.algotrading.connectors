@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik.deprecated;
 
-import com.algotrading.base.util.TimeConditionTrigger;
+import com.simpleutils.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikCalendar;
 import com.simpleutils.logs.AbstractLogger;
 import org.json.simple.JSONAware;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.algotrading.base.util.JSONConfig.getOrDefault;
+import static com.simpleutils.json.JSONConfig.getOrDefault;
 import static com.algotrading.connectors.quik.QuikDecoder.result;
 import static com.algotrading.connectors.quik.QuikDecoder.status;
 

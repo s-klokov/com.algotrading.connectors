@@ -7,8 +7,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import static com.algotrading.base.util.Deduplicator.STRING_DEDUPLICATOR;
-import static com.algotrading.base.util.JSONConfig.getStringNonNull;
+import static com.simpleutils.Deduplicator.STRING_DEDUPLICATOR;
+import static com.simpleutils.json.JSONConfig.getStringNonNull;
 
 /**
  * Информация о клиенте в терминале QUIK.

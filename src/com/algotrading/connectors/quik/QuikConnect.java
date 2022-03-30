@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik;
 
-import com.algotrading.base.util.SocketConnector;
+import com.simpleutils.socket.SocketConnector;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;

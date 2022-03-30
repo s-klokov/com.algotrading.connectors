@@ -8,7 +8,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.algotrading.base.util.JSONConfig.getLong;
+import static com.simpleutils.json.JSONConfig.getLong;
 import static com.algotrading.connectors.quik.QuikDecoder.result;
 import static com.algotrading.connectors.quik.QuikDecoder.status;
 

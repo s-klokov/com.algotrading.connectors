@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik.deprecated;
 
-import com.algotrading.base.util.TimeConditionTrigger;
+import com.simpleutils.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikDataSourceCandles;
 import com.algotrading.connectors.quik.QuikDecoder;
 import com.simpleutils.logs.AbstractLogger;

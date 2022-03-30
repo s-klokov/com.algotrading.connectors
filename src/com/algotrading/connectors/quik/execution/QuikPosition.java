@@ -2,7 +2,7 @@ package com.algotrading.connectors.quik.execution;
 
 import com.algotrading.connectors.quik.QuikClient;
 
-import static com.algotrading.base.util.Deduplicator.STRING_DEDUPLICATOR;
+import static com.simpleutils.Deduplicator.STRING_DEDUPLICATOR;
 
 /**
  * Позиция.

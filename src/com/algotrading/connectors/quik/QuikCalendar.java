@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik;
 
-import com.algotrading.base.util.JSONConfig;
+import com.simpleutils.json.JSONConfig;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 

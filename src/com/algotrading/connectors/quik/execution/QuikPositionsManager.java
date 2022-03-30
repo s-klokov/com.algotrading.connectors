@@ -1,7 +1,7 @@
 package com.algotrading.connectors.quik.execution;
 
 import com.algotrading.base.helpers.IOHelper;
-import com.algotrading.base.util.TimeConditionTrigger;
+import com.simpleutils.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikDecoder;
 import com.algotrading.connectors.quik.deprecated.QuikInterface;
 import com.algotrading.connectors.quik.deprecated.QuikReconnectProtection;
@@ -21,8 +21,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.algotrading.base.util.JSONConfig.getOrDefault;
-import static com.algotrading.base.util.JSONConfig.getStringNonNull;
+import static com.simpleutils.json.JSONConfig.getOrDefault;
+import static com.simpleutils.json.JSONConfig.getStringNonNull;
 
 public class QuikPositionsManager implements QuikInterface {
 

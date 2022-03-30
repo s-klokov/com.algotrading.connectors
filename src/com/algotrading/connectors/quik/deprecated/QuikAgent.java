@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik.deprecated;
 
-import com.algotrading.base.util.SocketConnector;
+import com.simpleutils.socket.SocketConnector;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import static com.algotrading.base.util.JSONConfig.getOrDefault;
+import static com.simpleutils.json.JSONConfig.getOrDefault;
 import static org.json.simple.JSONArray.toJSONString;
 import static org.json.simple.JSONValue.escape;
 

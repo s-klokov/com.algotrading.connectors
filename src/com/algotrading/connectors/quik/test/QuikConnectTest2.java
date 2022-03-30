@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik.test;
 
-import com.algotrading.base.util.TimeConditionTrigger;
+import com.simpleutils.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikConnect;
 import com.algotrading.connectors.quik.QuikServerConnectionStatus;
 import com.simpleutils.logs.AbstractLogger;
