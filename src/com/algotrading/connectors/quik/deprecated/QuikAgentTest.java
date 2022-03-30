@@ -1,7 +1,7 @@
 package com.algotrading.connectors.quik.deprecated;
 
-import com.algotrading.base.util.AbstractLogger;
-import com.algotrading.base.util.SimpleLogger;
+import com.simpleutils.logs.AbstractLogger;
+import com.simpleutils.logs.SimpleLogger;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;

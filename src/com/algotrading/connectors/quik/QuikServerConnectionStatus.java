@@ -1,6 +1,6 @@
 package com.algotrading.connectors.quik;
 
-import com.algotrading.base.util.AbstractLogger;
+import com.simpleutils.logs.AbstractLogger;
 import org.json.simple.JSONObject;
 
 import java.time.ZonedDateTime;

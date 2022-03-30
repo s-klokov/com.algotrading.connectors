@@ -1,4 +1,5 @@
 module com.algotrading.connectors {
+    requires com.simpleutils;
     requires com.algotrading.base;
     requires json.simple;
     exports com.algotrading.connectors.common;

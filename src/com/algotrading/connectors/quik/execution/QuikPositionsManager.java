@@ -1,11 +1,11 @@
 package com.algotrading.connectors.quik.execution;
 
 import com.algotrading.base.helpers.IOHelper;
-import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikDecoder;
 import com.algotrading.connectors.quik.deprecated.QuikInterface;
 import com.algotrading.connectors.quik.deprecated.QuikReconnectProtection;
+import com.simpleutils.logs.AbstractLogger;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;

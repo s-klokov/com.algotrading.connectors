@@ -1,10 +1,10 @@
 package com.algotrading.connectors.quik.deprecated;
 
-import com.algotrading.base.util.AbstractLogger;
-import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikDataSourceCandles;
 import com.algotrading.connectors.quik.QuikDecoder;
+import com.simpleutils.logs.AbstractLogger;
+import com.simpleutils.logs.SimpleLogger;
 import org.json.simple.JSONObject;
 
 import java.io.IOException;
@@ -160,11 +160,11 @@ class QuikAgentTest2 extends QuikAgent {
         if (openBatch == null) {
             openBatch = List.of(
                     getResponseMN("initDataSource", List.of("TQBR", "SBER", 1),
-                                  5, TimeUnit.SECONDS),
+                            5, TimeUnit.SECONDS),
                     getResponseMN("initDataSource", List.of("TQBR", "SBER", 5),
-                                  5, TimeUnit.SECONDS),
+                            5, TimeUnit.SECONDS),
                     getResponseMN("initDataSource", List.of("TQBR", "SBER", 15),
-                                  5, TimeUnit.SECONDS)
+                            5, TimeUnit.SECONDS)
             );
         }
     }
@@ -213,8 +213,8 @@ class QuikAgentTest2 extends QuikAgent {
         }
 
         if (openChain != null && openChain.isDone()
-            && openBatch != null && isOpenBatchDone()
-            && initDataSources != null && initDataSources.isDone()) {
+                && openBatch != null && isOpenBatchDone()
+                && initDataSources != null && initDataSources.isDone()) {
             isOpenComplete = true;
         }
         if (!isOpenComplete) {

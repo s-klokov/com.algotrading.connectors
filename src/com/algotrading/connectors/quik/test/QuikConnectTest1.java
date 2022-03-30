@@ -1,10 +1,10 @@
 package com.algotrading.connectors.quik.test;
 
-import com.algotrading.base.util.AbstractLogger;
-import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.connectors.quik.AbstractQuikListener;
 import com.algotrading.connectors.quik.QuikConnect;
 import com.algotrading.connectors.quik.QuikListener;
+import com.simpleutils.logs.AbstractLogger;
+import com.simpleutils.logs.SimpleLogger;
 import org.json.simple.JSONObject;
 
 import java.time.ZonedDateTime;

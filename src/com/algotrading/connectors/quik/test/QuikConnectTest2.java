@@ -1,10 +1,10 @@
 package com.algotrading.connectors.quik.test;
 
-import com.algotrading.base.util.AbstractLogger;
-import com.algotrading.base.util.SimpleLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikConnect;
 import com.algotrading.connectors.quik.QuikServerConnectionStatus;
+import com.simpleutils.logs.AbstractLogger;
+import com.simpleutils.logs.SimpleLogger;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;

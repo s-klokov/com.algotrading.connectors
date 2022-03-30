@@ -7,6 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="com.simpleutils" />
     <orderEntry type="module" module-name="com.algotrading.base" />
     <orderEntry type="module-library">
       <library>

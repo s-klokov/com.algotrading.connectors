@@ -1,8 +1,8 @@
 package com.algotrading.connectors.quik.deprecated;
 
-import com.algotrading.base.util.AbstractLogger;
 import com.algotrading.base.util.TimeConditionTrigger;
 import com.algotrading.connectors.quik.QuikCalendar;
+import com.simpleutils.logs.AbstractLogger;
 import org.json.simple.JSONAware;
 import org.json.simple.JSONObject;
 
@@ -152,7 +152,7 @@ public class QuikReconnectProtection implements QuikInterface {
         }
         if (this.isInterrupted) {
             if ((isConnected == null || isConnected.isDone())
-                && (isSubscribed == null || isSubscribed.isDone())) {
+                    && (isSubscribed == null || isSubscribed.isDone())) {
                 isRunning = false;
                 return;
             }
@@ -169,7 +169,7 @@ public class QuikReconnectProtection implements QuikInterface {
         if (isSubscribed == null) {
             logger.info(prefix + "subscribe to OnDisconnected");
             isSubscribed = getResponseCB("OnDisconnected", "*",
-                                         requestTimeout, TimeUnit.MILLISECONDS
+                    requestTimeout, TimeUnit.MILLISECONDS
             ).thenApply(response -> {
                 final boolean status = status(response);
                 logger.info(prefix + "subscribed OnDisconnected: " + status);
