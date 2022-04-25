@@ -7,15 +7,15 @@ public abstract class AbstractQuikListener implements QuikListener {
     /**
      * Подключение к терминалу QUIK.
      */
-    protected volatile QuikConnect quikConnect = null;
+    public volatile QuikConnect quikConnect = null;
     /**
      * Поток для исполнения бизнес-логики.
      */
-    protected volatile Thread executionThread = null;
+    public volatile Thread executionThread = null;
     /**
      * Очередь на исполнение.
      */
-    protected final Queue<Runnable> queue = new LinkedBlockingDeque<>();
+    public final Queue<Runnable> queue = new LinkedBlockingDeque<>();
 
     @Override
     public void setQuikConnect(final QuikConnect quikConnect) {
