@@ -247,7 +247,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         }
         final JSONObject response;
         try {
-            response = quikConnect.responseCB(
+            response = quikConnect.executeCB(
                     "OnDisconnected",
                     "*",
                     responseTimeout, TimeUnit.MILLISECONDS);
@@ -288,7 +288,7 @@ public class QuikServerConnectionStatus extends AbstractQuikListener {
         }
         final JSONObject response;
         try {
-            response = quikConnect.responseCB(
+            response = quikConnect.executeCB(
                     "isConnected", (List<?>) null,
                     responseTimeout, TimeUnit.MILLISECONDS);
         } catch (final Exception e) {

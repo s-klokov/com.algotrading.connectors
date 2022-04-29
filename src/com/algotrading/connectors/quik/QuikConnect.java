@@ -374,7 +374,7 @@ public class QuikConnect {
 
     /**
      * Остановить подключение к терминалу QUIK.
-     *
+     * <p>
      * Порядок остановки:<br>
      * 1) поток, реализующий бизнес-логику слушателя:<br>
      * {@code listener.getExecutionThread().interrupt();}<br>
@@ -466,8 +466,8 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return будущий ответ MN-сервера
      */
-    public CompletableFuture<JSONObject> futureResponseMN(final String chunk,
-                                                          final long timeout, final TimeUnit unit) {
+    public CompletableFuture<JSONObject> submitMN(final String chunk,
+                                                  final long timeout, final TimeUnit unit) {
         synchronized (responseMap) {
             final long id;
             try {
@@ -490,8 +490,8 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return будущий ответ MN-сервера
      */
-    public CompletableFuture<JSONObject> futureResponseMN(final String fname, final List<?> args,
-                                                          final long timeout, final TimeUnit unit) {
+    public CompletableFuture<JSONObject> submitMN(final String fname, final List<?> args,
+                                                  final long timeout, final TimeUnit unit) {
         synchronized (responseMap) {
             final long id;
             try {
@@ -513,8 +513,8 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return будущий ответ CB-сервера
      */
-    public CompletableFuture<JSONObject> futureResponseCB(final String chunk,
-                                                          final long timeout, final TimeUnit unit) {
+    public CompletableFuture<JSONObject> submitCB(final String chunk,
+                                                  final long timeout, final TimeUnit unit) {
         synchronized (responseMap) {
             final long id;
             try {
@@ -537,8 +537,8 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return будущий ответ CB-сервера
      */
-    public CompletableFuture<JSONObject> futureResponseCB(final String fname, final List<?> args,
-                                                          final long timeout, final TimeUnit unit) {
+    public CompletableFuture<JSONObject> submitCB(final String fname, final List<?> args,
+                                                  final long timeout, final TimeUnit unit) {
         synchronized (responseMap) {
             final long id;
             try {
@@ -561,8 +561,8 @@ public class QuikConnect {
      * @param unit     единица измерения времени
      * @return будущий ответ CB-сервера
      */
-    public CompletableFuture<JSONObject> futureResponseCB(final String callback, final String filter,
-                                                          final long timeout, final TimeUnit unit) {
+    public CompletableFuture<JSONObject> submitCB(final String callback, final String filter,
+                                                  final long timeout, final TimeUnit unit) {
         synchronized (responseMap) {
             final long id;
             try {
@@ -584,9 +584,9 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return ответ MN-сервера
      */
-    public JSONObject responseMN(final String chunk,
-                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
-        return futureResponseMN(chunk, timeout, unit).get();
+    public JSONObject executeMN(final String chunk,
+                                final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return submitMN(chunk, timeout, unit).get();
     }
 
     /**
@@ -598,9 +598,9 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return ответ MN-сервера
      */
-    public JSONObject responseMN(final String fname, final List<?> args,
-                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
-        return futureResponseMN(fname, args, timeout, unit).get();
+    public JSONObject executeMN(final String fname, final List<?> args,
+                                final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return submitMN(fname, args, timeout, unit).get();
     }
 
     /**
@@ -611,9 +611,9 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return ответ CB-сервера
      */
-    public JSONObject responseCB(final String chunk,
-                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
-        return futureResponseCB(chunk, timeout, unit).get();
+    public JSONObject executeCB(final String chunk,
+                                final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return submitCB(chunk, timeout, unit).get();
     }
 
     /**
@@ -625,9 +625,9 @@ public class QuikConnect {
      * @param unit    единица измерения времени
      * @return ответ CB-сервера
      */
-    public JSONObject responseCB(final String fname, final List<?> args,
-                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
-        return futureResponseCB(fname, args, timeout, unit).get();
+    public JSONObject executeCB(final String fname, final List<?> args,
+                                final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return submitCB(fname, args, timeout, unit).get();
     }
 
     /**
@@ -639,8 +639,8 @@ public class QuikConnect {
      * @param unit     единица измерения времени
      * @return ответ CB-сервера
      */
-    public JSONObject responseCB(final String callback, final String filter,
-                                 final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
-        return futureResponseCB(callback, filter, timeout, unit).get();
+    public JSONObject executeCB(final String callback, final String filter,
+                                final long timeout, final TimeUnit unit) throws CancellationException, ExecutionException, InterruptedException {
+        return submitCB(callback, filter, timeout, unit).get();
     }
 }
