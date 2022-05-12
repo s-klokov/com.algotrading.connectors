@@ -1,7 +1,7 @@
 package com.algotrading.connectors.quik.test;
 
 import com.simpleutils.TimeConditionTrigger;
-import com.algotrading.connectors.quik.QuikConnect;
+import com.simpleutils.quik.QuikConnect;
 import com.algotrading.connectors.quik.QuikServerConnectionStatus;
 import com.simpleutils.logs.AbstractLogger;
 import com.simpleutils.logs.SimpleLogger;
@@ -10,7 +10,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 
-import static com.algotrading.connectors.quik.AbstractQuikListener.pause;
+import static com.simpleutils.quik.AbstractQuikListener.pause;
 
 /**
  * Тестирование подключения к терминалу QUIK.

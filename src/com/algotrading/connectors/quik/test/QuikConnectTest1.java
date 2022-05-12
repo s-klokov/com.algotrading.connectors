@@ -1,8 +1,8 @@
 package com.algotrading.connectors.quik.test;
 
-import com.algotrading.connectors.quik.AbstractQuikListener;
-import com.algotrading.connectors.quik.QuikConnect;
-import com.algotrading.connectors.quik.QuikListener;
+import com.simpleutils.quik.AbstractQuikListener;
+import com.simpleutils.quik.QuikConnect;
+import com.simpleutils.quik.QuikListener;
 import com.simpleutils.logs.AbstractLogger;
 import com.simpleutils.logs.SimpleLogger;
 import org.json.simple.JSONObject;
@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
 
-import static com.algotrading.connectors.quik.AbstractQuikListener.pause;
+import static com.simpleutils.quik.AbstractQuikListener.pause;
 
 /**
  * Тестирование подключения к терминалу QUIK.
