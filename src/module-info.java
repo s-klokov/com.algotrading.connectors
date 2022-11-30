@@ -5,5 +5,4 @@ module com.algotrading.connectors {
     exports com.algotrading.connectors.common;
     exports com.algotrading.connectors.quik;
     exports com.algotrading.connectors.quik.execution;
-    exports com.algotrading.connectors.quik.deprecated;
 }
