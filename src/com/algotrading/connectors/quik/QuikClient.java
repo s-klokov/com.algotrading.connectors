@@ -11,23 +11,8 @@ import static com.simpleutils.Deduplicator.STRING_DEDUPLICATOR;
 import static com.simpleutils.json.JSONConfig.getStringNonNull;
 
 /**
- * Информация о клиенте в терминале QUIK.
- * <p>
- * Пример задания информации о клиенте в json-формате, где для каждого
- * идентификатора клиента указываются его счёта и аккаунты для всех торгуемых
- * кодов классов.
- * <pre>
- * {
- *   "210": {
- *     "L01+00000F00:210": "TQBR,TQOB,TQTF",
- *     "SPBFUT00210": "SPBFUT,SPBOPT,OPTW",
- *     "L75+00000F00:K0005_210": "SPBXM",
- *   },
- *   "D25": {
- *     "SPBFUT00D25": "SPBFUT,SPBOPT,OPTW",
- *   },
- * }
- * </pre>
+ * Информация о клиенте в терминале QUIK:
+ * идентификатор клиента и информация о счетах для торговли различных классов инструментов.
  */
 public class QuikClient {
     /**
