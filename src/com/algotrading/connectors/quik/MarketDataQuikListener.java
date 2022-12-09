@@ -141,8 +141,11 @@ public class MarketDataQuikListener extends SimpleQuikListener {
     @Override
     protected void processCallback(final String callback, final JSONObject jsonObject) {
         switch (callback) {
-            case "OnAllTrade" -> onAllTrade(jsonObject);
-            case "OnQuote" -> onQuote(jsonObject);
+            case "OnAllTrade" -> onAllTrade((JSONObject) jsonObject.get("arg1"));
+            case "OnQuote" -> onQuote(
+                    (String) jsonObject.get("arg1"),
+                    (String) jsonObject.get("arg2"),
+                    jsonObject.get("result"));
             default -> super.processCallback(callback, jsonObject);
         }
     }
@@ -151,8 +154,8 @@ public class MarketDataQuikListener extends SimpleQuikListener {
         logger.debug(() -> logPrefix + "OnAllTrade: " + jsonObject);
     }
 
-    protected void onQuote(final JSONObject jsonObject) {
-        logger.debug(() -> logPrefix + "OnQuote: " + jsonObject);
+    protected void onQuote(final String classCode, final String secCode, final Object result) {
+        logger.debug(() -> logPrefix + "OnQuote(" + classCode + "," + secCode + "): " + result);
     }
 
     @Override
