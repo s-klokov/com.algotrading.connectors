@@ -25,11 +25,12 @@ public class MarketDataTerminal {
 
     public void processRunnables() {
         Runnable runnable;
-        while ((runnable = marketDataQuikListener.queue.poll()) != null) {
+        while ((runnable = marketDataQuikListener.poll()) != null) {
             try {
                 runnable.run();
             } catch (final Exception e) {
-                marketDataQuikListener.logError("Cannot execute a runnable from QuikListener", e);
+                marketDataQuikListener.logError("Cannot execute a runnable submitted by "
+                        + marketDataQuikListener.getClass().getSimpleName(), e);
             }
         }
     }
