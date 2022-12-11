@@ -1,15 +1,25 @@
 package com.algotrading.connectors.quik;
 
+import com.simpleutils.json.JSONConfig;
+import com.simpleutils.logs.AbstractLogger;
 import com.simpleutils.quik.QuikConnect;
+import org.json.simple.JSONObject;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 public class MarketDataTerminal {
 
     private final MarketDataQuikListener marketDataQuikListener;
     private final QuikConnect quikConnect;
     private final String terminalId;
+
+    public static MarketDataTerminal newInstance(final AbstractLogger logger, final JSONObject config) {
+        final MarketDataQuikListener marketDataQuikListener = new MarketDataQuikListener();
+        marketDataQuikListener.configurate(logger, config);
+        final QuikConnect quikConnect = QuikConnect.newInstance(config, marketDataQuikListener);
+        return new MarketDataTerminal(marketDataQuikListener, quikConnect,
+                JSONConfig.getString(config, "clientId"));
+    }
 
     public MarketDataTerminal(final MarketDataQuikListener marketDataQuikListener,
                               final QuikConnect quikConnect,
@@ -55,17 +65,7 @@ public class MarketDataTerminal {
         return marketDataQuikListener.isOnline();
     }
 
-    public boolean isSynchronized() {
-        try {
-            return isOnline()
-                    && Boolean.TRUE.equals(quikConnect.executeMN(
-                    "ServerInfo.isSynchronized", null,
-                    marketDataQuikListener.getRequestTimeout().toMillis(), TimeUnit.MILLISECONDS).get("result"));
-        } catch (final ExecutionException e) {
-            return false;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
+    public boolean isSynchronized() throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.isSynchronized();
     }
 }

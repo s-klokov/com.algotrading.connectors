@@ -24,7 +24,7 @@ public class TradingQuikListener extends SimpleQuikListener {
         setLogger(logger);
         uid = JSONConfig.getLong(config, "uid");
         brokerRefs = JSONConfig.getJSONArray(config, "brokerRefs");
-        setLogPrefix(JSONConfig.getStringNonNull(config, "terminalId") + ": ");
+        setLogPrefix(JSONConfig.getStringNonNull(config, "clientId") + ": ");
 
         configurate(config, "requestTimeout", this::setRequestTimeout);
         configurate(config, "pauseAfterException", this::setPauseAfterException);

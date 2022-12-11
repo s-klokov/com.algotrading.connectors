@@ -57,7 +57,7 @@ public class MarketDataQuikListener extends SimpleQuikListener {
 
     public void configurate(final AbstractLogger logger, final JSONObject config) {
         setLogger(logger);
-        setLogPrefix(JSONConfig.getStringNonNull(config, "terminalId") + ": ");
+        setLogPrefix(JSONConfig.getStringNonNull(config, "clientId") + ": ");
 
         configurate(config, "requestTimeout", this::setRequestTimeout);
         configurate(config, "pauseAfterException", this::setPauseAfterException);

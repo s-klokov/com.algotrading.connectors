@@ -1,15 +1,25 @@
 package com.algotrading.connectors.quik;
 
+import com.simpleutils.json.JSONConfig;
+import com.simpleutils.logs.AbstractLogger;
 import com.simpleutils.quik.QuikConnect;
+import org.json.simple.JSONObject;
 
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 
 public class TradingTerminal {
 
     private final TradingQuikListener tradingQuikListener;
     private final QuikConnect quikConnect;
     private final String terminalId;
+
+    public static TradingTerminal newInstance(final AbstractLogger logger, final JSONObject config) {
+        final TradingQuikListener tradingQuikListener = new TradingQuikListener();
+        tradingQuikListener.configurate(logger, config);
+        final QuikConnect quikConnect = QuikConnect.newInstance(config, tradingQuikListener);
+        return new TradingTerminal(tradingQuikListener, quikConnect,
+                JSONConfig.getString(config, "clientId"));
+    }
 
     public TradingTerminal(final TradingQuikListener tradingQuikListener,
                            final QuikConnect quikConnect,
@@ -55,17 +65,7 @@ public class TradingTerminal {
         return tradingQuikListener.isOnline();
     }
 
-    public boolean isSynchronized() {
-        try {
-            return isOnline()
-                    && Boolean.TRUE.equals(quikConnect.executeMN(
-                    "ServerInfo.isSynchronized", null,
-                    tradingQuikListener.getRequestTimeout().toMillis(), TimeUnit.MILLISECONDS).get("result"));
-        } catch (final ExecutionException e) {
-            return false;
-        } catch (final InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        }
+    public boolean isSynchronized() throws ExecutionException, InterruptedException {
+        return tradingQuikListener.isSynchronized();
     }
 }
