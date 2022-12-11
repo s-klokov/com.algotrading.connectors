@@ -4,9 +4,7 @@ import com.simpleutils.json.JSONConfig;
 import com.simpleutils.logs.AbstractLogger;
 import com.simpleutils.quik.ClassSecCode;
 import com.simpleutils.quik.SimpleQuikListener;
-import com.simpleutils.quik.requests.BulkLevel2QuotesSubscriptionRequest;
-import com.simpleutils.quik.requests.CandlesSubscriptionRequest;
-import com.simpleutils.quik.requests.ParamSubscriptionRequest;
+import com.simpleutils.quik.requests.*;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
@@ -191,7 +189,7 @@ public class MarketDataQuikListener extends SimpleQuikListener {
             return;
         }
         final JSONObject response = quikConnect.executeMN(
-                new BulkLevel2QuotesSubscriptionRequest(level2QuotesSet).getRequest(),
+                new BulkQuoteLevel2SubscriptionRequest(level2QuotesSet).getRequest(),
                 requestTimeout.toMillis(), TimeUnit.MILLISECONDS);
         final JSONArray result = (JSONArray) response.get("result");
         String errorMessage = null;
@@ -264,5 +262,34 @@ public class MarketDataQuikListener extends SimpleQuikListener {
                 throw new RuntimeException(message);
             }
         }
+    }
+
+    public JSONObject getSecurityInfo(final String classCode,
+                                      final String secCode) throws ExecutionException, InterruptedException {
+        return (JSONObject) quikConnect.executeMN(
+                "getSecurityInfo", List.of(classCode, secCode),
+                requestTimeout.toMillis(), TimeUnit.MILLISECONDS).get("result");
+    }
+
+    public JSONObject getParamEx(final ClassSecCode classSecCode,
+                                 final Collection<String> parameters) throws ExecutionException, InterruptedException {
+        return (JSONObject) executeMN(new GetParamExRequest(classSecCode, parameters));
+    }
+
+    public JSONObject getCandles(final ClassSecCode classSecCode,
+                                 final int interval,
+                                 final int maxSize) throws ExecutionException, InterruptedException {
+        return (JSONObject) executeMN(new CandlesRequest(classSecCode, interval, maxSize));
+    }
+
+    public JSONObject getQuoteLevel2(final String classCode,
+                                     final String secCode) throws ExecutionException, InterruptedException {
+        return (JSONObject) quikConnect.executeMN(
+                "getQuoteLevel2", List.of(classCode, secCode),
+                requestTimeout.toMillis(), TimeUnit.MILLISECONDS).get("result");
+    }
+
+    public JSONArray getQuoteLevel2(final Set<ClassSecCode> classSecCodes) throws ExecutionException, InterruptedException {
+        return (JSONArray) executeMN(new BulkQuoteLevel2Request(classSecCodes));
     }
 }

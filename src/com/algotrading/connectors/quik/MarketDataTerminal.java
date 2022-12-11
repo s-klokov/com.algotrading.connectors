@@ -2,9 +2,13 @@ package com.algotrading.connectors.quik;
 
 import com.simpleutils.json.JSONConfig;
 import com.simpleutils.logs.AbstractLogger;
+import com.simpleutils.quik.ClassSecCode;
 import com.simpleutils.quik.QuikConnect;
+import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
+import java.util.Collection;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 public class MarketDataTerminal {
@@ -67,5 +71,30 @@ public class MarketDataTerminal {
 
     public boolean isSynchronized() throws ExecutionException, InterruptedException {
         return marketDataQuikListener.isSynchronized();
+    }
+
+    public JSONObject getSecurityInfo(final String classCode,
+                                      final String secCode) throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.getSecurityInfo(classCode, secCode);
+    }
+
+    public JSONObject getParamEx(final ClassSecCode classSecCode,
+                                 final Collection<String> parameters) throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.getParamEx(classSecCode, parameters);
+    }
+
+    public JSONObject getCandles(final ClassSecCode classSecCode,
+                                 final int interval,
+                                 final int maxSize) throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.getCandles(classSecCode, interval, maxSize);
+    }
+
+    public JSONObject getQuoteLevel2(final String classCode,
+                                     final String secCode) throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.getQuoteLevel2(classCode, secCode);
+    }
+
+    public JSONArray getQuoteLevel2(final Set<ClassSecCode> classSecCodes) throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.getQuoteLevel2(classSecCodes);
     }
 }
