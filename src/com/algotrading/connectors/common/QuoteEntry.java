@@ -2,21 +2,11 @@ package com.algotrading.connectors.common;
 
 /**
  * Котировка в стакане.
+ *
+ * @param price    цена
+ * @param quantity количество
  */
-public class QuoteEntry {
-    /**
-     * Цена.
-     */
-    public final double price;
-    /**
-     * Количество.
-     */
-    public final int quantity;
-
-    public QuoteEntry(final double price, final int quantity) {
-        this.price = price;
-        this.quantity = quantity;
-    }
+public record QuoteEntry(double price, int quantity) {
 
     @Override
     public String toString() {

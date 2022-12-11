@@ -20,7 +20,7 @@ public class QuoteLevel2 {
         }
         QuoteEntry bid = bids.get(0);
         for (final QuoteEntry quoteEntry : bids) {
-            if (bid.price < quoteEntry.price) {
+            if (bid.price() < quoteEntry.price()) {
                 bid = quoteEntry;
             }
         }
@@ -33,7 +33,7 @@ public class QuoteLevel2 {
         }
         QuoteEntry offer = offers.get(0);
         for (final QuoteEntry quoteEntry : offers) {
-            if (offer.price > quoteEntry.price) {
+            if (offer.price() > quoteEntry.price()) {
                 offer = quoteEntry;
             }
         }
