@@ -82,15 +82,17 @@ public class MarketDataTerminal {
         return marketDataQuikListener.getSecurityInfo(classCode, secCode);
     }
 
-    public JSONObject getParams(final ClassSecCode classSecCode,
+    public JSONObject getParams(final String classCode,
+                                final String secCode,
                                 final Collection<String> parameters) throws ExecutionException, InterruptedException {
-        return marketDataQuikListener.getParams(classSecCode, parameters);
+        return marketDataQuikListener.getParams(classCode, secCode, parameters);
     }
 
-    public JSONObject getCandles(final ClassSecCode classSecCode,
+    public JSONObject getCandles(final String classCode,
+                                 final String secCode,
                                  final int interval,
                                  final int maxSize) throws ExecutionException, InterruptedException {
-        return marketDataQuikListener.getCandles(classSecCode, interval, maxSize);
+        return marketDataQuikListener.getCandles(classCode, secCode, interval, maxSize);
     }
 
     public JSONObject getQuoteLevel2(final String classCode,

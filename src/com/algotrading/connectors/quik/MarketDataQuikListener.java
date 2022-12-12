@@ -271,15 +271,17 @@ public class MarketDataQuikListener extends SimpleQuikListener {
                 requestTimeout.toMillis(), TimeUnit.MILLISECONDS).get("result");
     }
 
-    public JSONObject getParams(final ClassSecCode classSecCode,
+    public JSONObject getParams(final String classCode,
+                                final String secCode,
                                 final Collection<String> parameters) throws ExecutionException, InterruptedException {
-        return (JSONObject) executeMN(new GetParamExRequest(classSecCode, parameters));
+        return (JSONObject) executeMN(new GetParamExRequest(classCode, secCode, parameters));
     }
 
-    public JSONObject getCandles(final ClassSecCode classSecCode,
+    public JSONObject getCandles(final String classCode,
+                                 final String secCode,
                                  final int interval,
                                  final int maxSize) throws ExecutionException, InterruptedException {
-        return (JSONObject) executeMN(new CandlesRequest(classSecCode, interval, maxSize));
+        return (JSONObject) executeMN(new CandlesRequest(classCode, secCode, interval, maxSize));
     }
 
     public JSONObject getQuoteLevel2(final String classCode,

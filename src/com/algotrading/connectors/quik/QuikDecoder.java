@@ -101,6 +101,10 @@ public class QuikDecoder {
         }
     }
 
+    public static FinSeries candles(final JSONObject jsonCandles) {
+        return candles(jsonCandles, t -> t, t -> true);
+    }
+
     private static final int TIMESTAMP_MASK = 0b11110110110110110110111;
 
     /**
