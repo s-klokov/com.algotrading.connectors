@@ -271,8 +271,8 @@ public class MarketDataQuikListener extends SimpleQuikListener {
                 requestTimeout.toMillis(), TimeUnit.MILLISECONDS).get("result");
     }
 
-    public JSONObject getParamEx(final ClassSecCode classSecCode,
-                                 final Collection<String> parameters) throws ExecutionException, InterruptedException {
+    public JSONObject getParams(final ClassSecCode classSecCode,
+                                final Collection<String> parameters) throws ExecutionException, InterruptedException {
         return (JSONObject) executeMN(new GetParamExRequest(classSecCode, parameters));
     }
 

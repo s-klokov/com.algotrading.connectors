@@ -69,6 +69,10 @@ public class MarketDataTerminal {
         return marketDataQuikListener.isOnline();
     }
 
+    public boolean isSubscribed() {
+        return marketDataQuikListener.isSubscribed();
+    }
+
     public boolean isSynchronized() throws ExecutionException, InterruptedException {
         return marketDataQuikListener.isSynchronized();
     }
@@ -78,9 +82,9 @@ public class MarketDataTerminal {
         return marketDataQuikListener.getSecurityInfo(classCode, secCode);
     }
 
-    public JSONObject getParamEx(final ClassSecCode classSecCode,
-                                 final Collection<String> parameters) throws ExecutionException, InterruptedException {
-        return marketDataQuikListener.getParamEx(classSecCode, parameters);
+    public JSONObject getParams(final ClassSecCode classSecCode,
+                                final Collection<String> parameters) throws ExecutionException, InterruptedException {
+        return marketDataQuikListener.getParams(classSecCode, parameters);
     }
 
     public JSONObject getCandles(final ClassSecCode classSecCode,

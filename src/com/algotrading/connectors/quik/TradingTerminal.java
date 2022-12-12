@@ -65,6 +65,10 @@ public class TradingTerminal {
         return tradingQuikListener.isOnline();
     }
 
+    public boolean isSubscribed() {
+        return tradingQuikListener.isSubscribed();
+    }
+
     public boolean isSynchronized() throws ExecutionException, InterruptedException {
         return tradingQuikListener.isSynchronized();
     }
