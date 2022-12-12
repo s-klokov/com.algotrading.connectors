@@ -15,6 +15,10 @@ import java.util.function.LongUnaryOperator;
  */
 public class QuikDecoder {
 
+    private QuikDecoder() {
+        throw new UnsupportedOperationException();
+    }
+
     /**
      * Получить булев статус ответа из терминала QUIK.
      *
@@ -32,7 +36,8 @@ public class QuikDecoder {
      * @return описание ошибки или {@code null}, если его нет
      */
     public static String err(final JSONObject response) {
-        return String.valueOf(response.get("err"));
+        final Object err = response.get("err");
+        return (err == null) ? null : String.valueOf(err);
     }
 
     /**
@@ -59,9 +64,9 @@ public class QuikDecoder {
      * @param timeFilter  фильтр по времени свечи
      * @return преобразованный временной ряд
      */
-    public static FinSeries getCandles(final JSONObject jsonCandles,
-                                       final LongUnaryOperator timeShift,
-                                       final LongPredicate timeFilter) {
+    public static FinSeries candles(final JSONObject jsonCandles,
+                                    final LongUnaryOperator timeShift,
+                                    final LongPredicate timeFilter) {
         try {
             final int size = (int) ParseHelper.asLong(jsonCandles.get("size"));
             final JSONArray arrayT = (JSONArray) jsonCandles.get("T");
