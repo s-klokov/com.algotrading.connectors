@@ -56,13 +56,12 @@ public class QuikDecoder {
     }
 
     /**
-     * Преобразовать json-представление свечей в объект типа FinSeries
-     * со сдвигом по времени, фильтрацией и компрессией.
+     * Преобразовать json-представление свечей в объект типа {@link FinSeries} со сдвигом по времени и фильтрацией.
      *
      * @param jsonCandles json-объект, полученный из QUIK
-     * @param timeShift   временной сдвиг
-     * @param timeFilter  фильтр по времени свечи
-     * @return преобразованный временной ряд
+     * @param timeShift   временной сдвиг; если {@code null}, то не применяется
+     * @param timeFilter  фильтр по времени свечи; если {@code null}, то не применяется
+     * @return временной ряд
      */
     public static FinSeries candles(final JSONObject jsonCandles,
                                     final LongUnaryOperator timeShift,
@@ -85,8 +84,10 @@ public class QuikDecoder {
             for (int i = 0; i < size; i++) {
                 final String timestamp = (String) arrayT.get(i);
                 long t = parseTimestamp(timestamp);
-                t = timeShift.applyAsLong(t);
-                if (timeFilter.test(t)) {
+                if (timeShift != null) {
+                    t = timeShift.applyAsLong(t);
+                }
+                if (timeFilter == null || timeFilter.test(t)) {
                     timeCode.append(t);
                     open.append(ParseHelper.asDouble(arrayO.get(i)));
                     high.append(ParseHelper.asDouble(arrayH.get(i)));
@@ -101,8 +102,14 @@ public class QuikDecoder {
         }
     }
 
+    /**
+     * Преобразовать json-представление свечей в объект типа {@link FinSeries}.
+     *
+     * @param jsonCandles json-объект, полученный из QUIK*
+     * @return временной ряд
+     */
     public static FinSeries candles(final JSONObject jsonCandles) {
-        return candles(jsonCandles, t -> t, t -> true);
+        return candles(jsonCandles, null, null);
     }
 
     private static final int TIMESTAMP_MASK = 0b11110110110110110110111;
