@@ -77,6 +77,14 @@ public class MarketDataTerminal {
         return marketDataQuikListener.isSynchronized();
     }
 
+    public boolean isCurrSynchronized() {
+        return marketDataQuikListener.isCurrSynchronized();
+    }
+
+    public boolean isPrevSynchronized() {
+        return marketDataQuikListener.isPrevSynchronized();
+    }
+
     public JSONObject getSecurityInfo(final String classCode,
                                       final String secCode) throws ExecutionException, InterruptedException {
         return marketDataQuikListener.getSecurityInfo(classCode, secCode);

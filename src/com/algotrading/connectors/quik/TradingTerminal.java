@@ -72,4 +72,12 @@ public class TradingTerminal {
     public boolean isSynchronized() throws ExecutionException, InterruptedException {
         return tradingQuikListener.isSynchronized();
     }
+
+    public boolean isCurrSynchronized() {
+        return tradingQuikListener.isCurrSynchronized();
+    }
+
+    public boolean isPrevSynchronized() {
+        return tradingQuikListener.isPrevSynchronized();
+    }
 }
