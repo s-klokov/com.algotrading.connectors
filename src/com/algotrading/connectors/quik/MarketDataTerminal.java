@@ -77,12 +77,8 @@ public class MarketDataTerminal {
         return marketDataQuikListener.isSynchronized();
     }
 
-    public boolean isCurrSynchronized() {
-        return marketDataQuikListener.isCurrSynchronized();
-    }
-
-    public boolean isPrevSynchronized() {
-        return marketDataQuikListener.isPrevSynchronized();
+    public boolean isSynchronizedChanged() {
+        return marketDataQuikListener.isSynchronizedChanged();
     }
 
     public JSONObject getSecurityInfo(final String classCode,

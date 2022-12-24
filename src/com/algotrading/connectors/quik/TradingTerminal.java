@@ -73,11 +73,7 @@ public class TradingTerminal {
         return tradingQuikListener.isSynchronized();
     }
 
-    public boolean isCurrSynchronized() {
-        return tradingQuikListener.isCurrSynchronized();
-    }
-
-    public boolean isPrevSynchronized() {
-        return tradingQuikListener.isPrevSynchronized();
+    public boolean isSynchronizedChanged() {
+        return tradingQuikListener.isSynchronizedChanged();
     }
 }
