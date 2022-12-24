@@ -24,8 +24,8 @@ public class MarketDataSeries {
     public final int[] updateSizes;
     private final LongUnaryOperator timeShift;
     private final LongPredicate timeFilter;
-    private final int timeframe;
-    private final TimeUnit unit;
+    public final int timeframe;
+    public final TimeUnit unit;
     public final UpdatableCandles updatableCandles;
 
     public MarketDataSeries(final JSONObject config) {
